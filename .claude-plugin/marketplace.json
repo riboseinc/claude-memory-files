@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "claude-memory-files",
+  "description": "Curated, modular memory and instruction files for Claude Code (Ribose orgs). The marketplace publishes one plugin — memory-files-tools — that adds slash commands for browsing, installing, removing, and submitting memory files from this repo.",
+  "owner": {
+    "name": "Ribose",
+    "url": "https://github.com/riboseinc"
+  },
+  "plugins": [
+    {
+      "name": "memory-files-tools",
+      "source": "./tools/plugin",
+      "description": "Slash commands for installing, removing, listing, and submitting memory files from the riboseinc/claude-memory-files catalogue."
+    }
+  ]
+}
