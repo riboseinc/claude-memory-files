@@ -9,11 +9,12 @@
 # (Requires docs/_site/ to exist — run `bundle exec jekyll build` inside
 # docs/ first.)
 
-# Base path for resolving root-relative URLs found in local HTML files.
+# Root directory for resolving root-relative URLs found in local HTML files.
 # The validate-docs job builds with --baseurl "" so paths are like
 # /concepts/foo/ rather than /claude-memory-files/concepts/foo/, which
-# this base then resolves to docs/_site/concepts/foo/.
-base = "docs/_site"
+# this root_dir then resolves to docs/_site/concepts/foo/.
+# (Field name is `root_dir`, not `base`, in lychee v0.23+.)
+root_dir = "/github/workspace/docs/_site"
 
 # Accept these status codes as "OK" — strict 200 plus the codes we see in
 # practice. 429 is included to absorb transient GitHub rate limits; 403
