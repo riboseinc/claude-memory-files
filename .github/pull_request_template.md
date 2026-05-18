@@ -9,8 +9,8 @@
 
 ## Validator passes
 
-- [ ] `node _meta/validate.mjs` exits 0 locally (once validator lands in PR 2).
-- [ ] If this PR touches `_meta/build-codeowners.mjs` output, `.github/CODEOWNERS` is regenerated and committed.
+- [ ] `node _meta/validate.mjs` exits 0 locally (CI re-runs it on every PR).
+- [ ] If this PR adds/removes a content file or modifies frontmatter `owners:`, both `.github/CODEOWNERS` and `_meta/index.json` are regenerated (`node _meta/build-codeowners.mjs && node _meta/build-index.mjs`) and committed. CI drift-checks both.
 
 ## Frontmatter checks (for new content files)
 

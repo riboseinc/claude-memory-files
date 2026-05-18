@@ -1,0 +1,43 @@
+name: Validate content files
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run validator
+        run: node _meta/validate.mjs
+
+      - name: Check CODEOWNERS drift
+        run: |
+          node _meta/build-codeowners.mjs
+          if ! git diff --exit-code .github/CODEOWNERS; then
+            echo "::error::.github/CODEOWNERS is out of date. Run 'node _meta/build-codeowners.mjs' locally and commit the result."
+            exit 1
+          fi
+
+      - name: Check index.json drift
+        run: |
+          node _meta/build-index.mjs
+          if ! git diff --exit-code _meta/index.json; then
+            echo "::error::_meta/index.json is out of date. Run 'node _meta/build-index.mjs' locally and commit the result."
+            exit 1
+          fi

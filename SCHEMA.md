@@ -117,7 +117,7 @@ The validator reports the following as **warnings** (do not block):
 - `supersedes:` references a slug not in the repo.
 - `[[wiki-link]]`-style body reference doesn't resolve to a file in the repo.
 
-GitHub Actions enforcement of these rules is deferred to v2 — see [issue #1 comment 2](https://github.com/riboseinc/claude-memory-files/issues/1).
+GitHub Actions enforces these rules on every PR via `.github/workflows/validate.yml`. The workflow runs `node _meta/validate.mjs` plus drift checks against `_meta/build-codeowners.mjs` and `_meta/build-index.mjs` output. Originally deferred to v2 per [issue #1 comment 2](https://github.com/riboseinc/claude-memory-files/issues/1), but wired up earlier because the validator script is proven and the marginal CI cost is approximately zero.
 
 ## Worked examples (once seeds land)
 
