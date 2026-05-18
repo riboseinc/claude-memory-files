@@ -1,5 +1,90 @@
 {
-  "generated": "2026-05-18T13:39:59.379Z",
-  "files": [],
+  "generated": "2026-05-18T13:46:46.953Z",
+  "files": [
+    {
+      "name": "github-claude-attribution",
+      "path": "instructions/github-claude-attribution.md",
+      "description": "Append the robot footer to substantive GitHub bodies (issues, PRs, narrative comments). Same footer the gh pr create harness injects.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "attribution",
+        "claude-code",
+        "pr"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "github-content-via-file",
+      "path": "instructions/github-content-via-file.md",
+      "description": "Use --body-file / -F for non-trivial gh or git content; never heredoc/inline (shell quoting on backticks/multiline is the failure mode).",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "pr",
+        "cli"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "github-pr-title-issue-link",
+      "path": "instructions/github-pr-title-issue-link.md",
+      "description": "Embed the full issue URL in the PR title so GitHub renders the cross-reference card with the PR title visible on the issue timeline.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "pr",
+        "issue"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "paragraph-shape",
+      "path": "instructions/paragraph-shape.md",
+      "description": "Soft max 4 sentences per paragraph when reasoning is surfaced in narrow side-panel narration; not a cap for maximised docs.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "narration",
+        "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "sibling-clones",
+      "path": "instructions/sibling-clones.md",
+      "description": "Clone external repos into the parent of cwd (sibling directories), never /tmp; persistence across sessions is the goal.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "sibling-clones",
+        "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    }
+  ],
   "deprecated": []
 }
