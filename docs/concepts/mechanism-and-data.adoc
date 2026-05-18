@@ -1,0 +1,63 @@
+---
+title: Mechanism and data
+layout: default
+parent: Concepts
+nav_order: 2
+---
+
+= Mechanism and data: the `requires-companion` pattern
+
+Some rules are *universal mechanisms* that depend on *personal data* to be operational. The `requires-companion:` frontmatter field is how the repo expresses that pairing: ship the mechanism as `scope: universal`, ship the data as `scope: personal-share`, and declare the dependency so the installer can warn when the companion isn't installed.
+
+== The seed example
+
+The clearest worked pair in the v1 seed:
+
+[cols="1,3"]
+|===
+| `instructions/github-narrative-location.md`
+| **Mechanism (universal).** "For gems you maintain, the detailed change narrative belongs in **issue/ticket comments**; for gems maintained by other people, it belongs in the **PR description**." This rule is universal — every developer working across owned and non-owned gems benefits from it. Declares `requires-companion: [user-maintained-gems]`.
+
+| `memory/user-maintained-gems.md`
+| **Data (personal-share, skeletonised).** The maintainer table that says *which* gems each user owns and who the default maintainer is for the rest. Nick's metanorma row ships as a worked example; every other user rewrites it for their own setup. The validator strictly enforces single-owner (`owners == [author.github]`) for personal-share files.
+|===
+
+A second pair uses the same data file from a different angle: `instructions/github-pr-assignment.md` (mechanism: every PR has an assignee, owned vs non-owned routing) also declares `requires-companion: [user-maintained-gems]`. One data file, two consuming mechanisms.
+
+== Why the pattern matters
+
+Without `requires-companion`, two failure modes loom:
+
+1. **Mechanism alone, no data.** `github-narrative-location` is universal in principle but inert in practice — it tells Claude "consult your installed `user-maintained-gems.md`" and trusts that file exists. If a user installs only the instruction and not the data, the rule has nothing to consult. The installer surfaces this with a `requires-companion` warning at install time.
+
+2. **Mechanism with data inlined.** Naively, the maintainer table could live inside the instruction file itself. But that makes the file personal — `scope: universal` would be a lie, and every contributor would have to override the table on install, defeating the cherry-pick model.
+
+The pattern keeps the data factored out, declared as personal, and installed separately. The validator enforces the integrity (`personal-share` ⇒ single-owner), and the installer reports any missing companion at install time.
+
+== Behaviour on install
+
+When you install a file with `requires-companion`, the installer checks whether the companion slug is present:
+
+* If the companion is already installed → silent install.
+* If the companion is in the repo but not yet installed locally → the installer prints a warning suggesting you install it too.
+* If the companion isn't in the repo at all → the validator already caught that at PR time (with a warning on the dependent file).
+
+[source,bash]
+----
+$ ./tools/install.sh instructions/github-narrative-location.md
+Installing github-narrative-location (type: instruction, scope: universal)
+Note: requires-companion: user-maintained-gems is not yet installed.
+  Consider: ./tools/install.sh memory/user-maintained-gems.md
+----
+
+(The actual warning text may differ; the principle is the same.)
+
+== When you'd use this pattern in a new file
+
+If you're drafting a rule and find yourself writing "consult your local list of X" or "see your team's table of Y", you're probably looking at a mechanism/data split. Factor the data into a separate file under `memory/` with `scope: personal-share` and `owners: [your-handle]`; declare `requires-companion: [<data-slug>]` in the mechanism.
+
+== See also
+
+* link:../scope-rubric/[Scope rubric] — when to use `universal` vs `team` vs `personal-share`.
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — `requires-companion:` field definition.
+* https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965838[Issue #1 comment 5] — the seed-set discussion, where the `github-narrative-location` ↔ `user-maintained-gems` pair was first laid out.

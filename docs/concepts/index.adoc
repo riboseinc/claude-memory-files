@@ -1,0 +1,18 @@
+---
+title: Concepts
+layout: default
+nav_order: 3
+has_children: true
+---
+
+= Concepts
+
+Background pages explaining the design decisions that shape this repo. Read these to understand *why* the schema and category structure look the way they do, before you start submitting your own files.
+
+Pages in this section:
+
+* link:scope-rubric/[**Scope rubric**] — when to use `universal`, `team`, or `personal-share`, with worked examples from the seed.
+* link:mechanism-and-data/[**Mechanism and data**] — the `requires-companion` pattern, demonstrated by `github-narrative-location` + `user-maintained-gems`.
+* link:instructions-vs-memory/[**Instructions vs memory**] — the operational distinction between auto-loading instruction files and reference-only memory files.
+* link:settings-fragments/[**Settings-fragments**] — how JSON snippets deep-merge into your `~/.claude/settings.json`, preserving hand-curated entries.
+* link:hooks-deferred/[**Why hooks are deferred to v2**] — the CVE history that motivates the staged rollout.

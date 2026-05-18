@@ -1,0 +1,75 @@
+---
+title: Scope rubric
+layout: default
+parent: Concepts
+nav_order: 1
+---
+
+= Scope rubric: universal, team, personal-share
+
+Every content file declares a `scope:` field. Picking the right one is the most important triage decision for a contribution; it determines who reviews the PR, who installs the file, and how the picker filters it.
+
+[NOTE]
+====
+The `scope` field has no precedent in any other Claude Code aggregator. It's the explicit answer to the failure mode catalogued in cursor-rules: most rules in the wild are one person's idiom framed as universal, with no convention separating "my taste" from "team practice" from "ecosystem fact".
+====
+
+== `universal`
+
+Applies regardless of team or org context. The rule is generic enough that any Claude Code user would benefit from installing it.
+
+**Examples in the seed:**
+
+* `github-pr-title-issue-link` — embed the full issue URL in PR titles so GitHub renders the cross-reference card properly. A convention about how a third-party service (GitHub) renders backlinks; nothing org-specific.
+* `paragraph-shape` — soft max 4 sentences per paragraph in narrow-side-panel narration. A UX discipline about narration shape, not tied to any team's workflow.
+* `sibling-clones` — clone external repos into the parent of `cwd`, not `/tmp`. A workflow preference about persistence across sessions.
+
+**Rule of thumb:** if you can explain the rule without naming a team, an org, or a specific project, it's probably universal.
+
+== `team`
+
+A team's operating norm. Two sub-cases:
+
+**Generic team practice** — any team could adopt this norm. Examples: `feedback_pr_always_assigned` (every PR has an assignee at creation), `feedback_pr_chain_no_local_deps` (cross-repo Ruby PR sequences use `Gemfile.devel` git+branch refs, not local overrides). Different teams may have different specifics, but the *shape* of the rule applies broadly.
+
+**Specific-team norm** — the rule only makes sense for a named team. Examples: `github-no-releases` (metanorma's fortnightly-release cycle) and `github-metanorma-project` (auto-add issues to org project #15) both apply only to `team: metanorma`. Use the optional `team:` qualifier so the picker can filter:
+
+[source,bash]
+----
+/list-memory-files --team metanorma
+----
+
+**Rule of thumb:** if the rule names a team in its body, declare `team: <name>` in the frontmatter. Otherwise leave it off.
+
+== `personal-share`
+
+A single author's data or preference, shared for opt-in cherry-pick. **Not** endorsed as team norm.
+
+The validator strictly enforces `owners == [author.github]` (length 1, exact author) for personal-share entries. Third parties who want to amend fork as a new slug (e.g. `andrew-maintained-gems` parallel to `user-maintained-gems`); they don't co-own the original author's file.
+
+Personal-share covers two flavours:
+
+* **Data templates**, like `user-maintained-gems.md` — the maintainer table is a worked example you customise with your own gem list. "Your data goes here; here's how Nick filled it in."
+* **Behavioural preferences**, like `feedback_handhold_when_frustrated.md` — the recovery template is the universal part; the specific distress signals (swearing, ALL CAPS, repeated "again") are Nick's tells. Other users adjust to their own.
+
+**Rule of thumb:** if the rule names "I" or "my", or if every user needs to fork-and-customise the contents rather than installing verbatim, it's `personal-share`.
+
+== Decision flow
+
+[mermaid]
+....
+flowchart TD
+  A[Drafting a new file] --> B{Does the rule name<br/>a specific team/org?}
+  B -->|Yes| C[scope: team<br/>team: name]
+  B -->|No| D{Is every user expected<br/>to customise the contents<br/>before using it?}
+  D -->|Yes| E[scope: personal-share<br/>owners: single author]
+  D -->|No| F{Is the rule's principle<br/>tied to a workflow shared<br/>by many teams?}
+  F -->|Yes| G[scope: team<br/>no team: qualifier]
+  F -->|No| H[scope: universal]
+....
+
+== See also
+
+* link:../mechanism-and-data/[Mechanism and data] — how the `requires-companion` pattern lets a `universal` instruction pair with a `personal-share` data file.
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — the full frontmatter contract.
+* https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965505[Issue #1 comment 2] — the design rationale for adding `scope:` to the schema.
