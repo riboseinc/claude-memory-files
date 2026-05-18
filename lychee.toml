@@ -19,16 +19,14 @@
 # but are otherwise live.
 accept = ["200..=206", "301", "302", "303", "307", "308", "403", "429"]
 
-# Don't check self-referential absolute URLs to the live site or to the
-# repo's main branch — they may not exist yet (this PR may be the one
-# creating them). The riboseinc.github.io rule is broadened to all paths
-# on the host because validate-docs builds with --baseurl "" so canonical
-# URLs lack the /claude-memory-files prefix.
-exclude = [
-  "^https://riboseinc\\.github\\.io/",
-  "^https://github\\.com/riboseinc/claude-memory-files/tree/main/docs/",
-  "^https://github\\.com/riboseinc/claude-memory-files/blob/main/docs/",
-]
+# Self-reference exclusions are no longer needed:
+#   - The live site at https://riboseinc.github.io/claude-memory-files/ is
+#     deployed (D3 merged + GH Pages enabled), so canonical URLs resolve.
+#   - The .adoc files under github.com/.../tree|blob/main/docs/ exist on
+#     main (D3 merged), so source-file references resolve.
+# If a future PR needs to temporarily exclude self-references again (e.g.
+# during a docs-site restructure that hasn't deployed yet), re-add them
+# here.
 
 # Treat localhost / 127.0.0.1 / 0.0.0.0 references as OK (the Jekyll dev
 # server's URLs will appear in the rendered output during local builds).
