@@ -41,3 +41,15 @@ jobs:
             echo "::error::_meta/index.json is out of date. Run 'node _meta/build-index.mjs' locally and commit the result."
             exit 1
           fi
+
+      - name: ShellCheck install.sh + uninstall.sh + test-install.sh
+        if: hashFiles('tools/*.sh') != ''
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get install -y shellcheck
+          fi
+          shellcheck tools/install.sh tools/uninstall.sh tools/test-install.sh
+
+      - name: Install/uninstall smoke test
+        if: hashFiles('tools/install.sh') != ''
+        run: bash tools/test-install.sh
