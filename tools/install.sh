@@ -89,9 +89,11 @@ semver_category() {
   local from="$1" to="$2"
   [[ -z "$from" || -z "$to" ]] && { echo "unknown"; return; }
   [[ "$from" == "$to" ]] && { echo "none"; return; }
-  local fM fm fp tM tm tp
-  IFS='.' read -r fM fm fp <<< "$from"
-  IFS='.' read -r tM tm tp <<< "$to"
+  local fM fm tM tm
+  # Patch component is intentionally discarded — we only need major and minor
+  # to categorise the bump; "patch" is the default when neither differs.
+  IFS='.' read -r fM fm _ <<< "$from"
+  IFS='.' read -r tM tm _ <<< "$to"
   if [[ "$fM" != "$tM" ]]; then echo "major"
   elif [[ "$fm" != "$tm" ]]; then echo "minor"
   else echo "patch"
@@ -118,7 +120,8 @@ update_settings_fragment_action() {
   local old_frag
   old_frag="$(jq -r --arg s "$slug" '.files[$s]."merged-fragment"' "$MANIFEST")"
 
-  local backup="${target}.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+  local backup
+  backup="${target}.bak.$(date -u +%Y%m%dT%H%M%SZ)"
   cp "$target" "$backup"
   info "  Backed up settings.json → $backup"
 
