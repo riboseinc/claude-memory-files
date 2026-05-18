@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-18T13:46:46.953Z",
+  "generated": "2026-05-18T14:02:07.868Z",
   "files": [
     {
       "name": "github-claude-attribution",
@@ -37,6 +37,82 @@
       ]
     },
     {
+      "name": "github-metanorma-project",
+      "path": "instructions/github-metanorma-project.md",
+      "description": "Issues created in any metanorma/* repo must be added to the org-level Metanorma project",
+      "type": "instruction",
+      "scope": "team",
+      "team": "metanorma",
+      "tags": [
+        "github",
+        "metanorma",
+        "issue"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "github-narrative-location",
+      "path": "instructions/github-narrative-location.md",
+      "description": "Narrative goes in ticket comments for gems you maintain, in PR descriptions otherwise. Mechanism universal; data in companion file.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "pr",
+        "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ],
+      "requires-companion": [
+        "user-maintained-gems"
+      ]
+    },
+    {
+      "name": "github-no-releases",
+      "path": "instructions/github-no-releases.md",
+      "description": "Don't bump gem VERSION, run gem build/push, or rake release; metanorma gems ship as part of a fortnightly batched release cadence.",
+      "type": "instruction",
+      "scope": "team",
+      "team": "metanorma",
+      "tags": [
+        "github",
+        "release",
+        "metanorma"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "github-pr-assignment",
+      "path": "instructions/github-pr-assignment.md",
+      "description": "Every PR must have an assignee at creation time. Pass --assignee to gh pr create; consult user-maintained-gems.md for who.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "pr",
+        "review"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ],
+      "requires-companion": [
+        "user-maintained-gems"
+      ]
+    },
+    {
       "name": "github-pr-title-issue-link",
       "path": "instructions/github-pr-title-issue-link.md",
       "description": "Embed the full issue URL in the PR title so GitHub renders the cross-reference card with the PR title visible on the issue timeline.",
@@ -46,6 +122,38 @@
         "github",
         "pr",
         "issue"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "memory-autoload-default",
+      "path": "instructions/memory-autoload-default.md",
+      "description": "When user says \"remember\", save to ~/.claude/memory/ + inline operational rule into ~/.claude/instructions/ file @-included from CLAUDE.md.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "memory",
+        "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "narrate-plan",
+      "path": "instructions/narrate-plan.md",
+      "description": "Before each non-trivial tool call, state intent in one sentence; name the rejected alternative at decision points.",
+      "type": "instruction",
+      "scope": "universal",
+      "tags": [
+        "narration",
+        "conventions"
       ],
       "version": "1.0.0",
       "author": "opoudjis",
@@ -78,6 +186,23 @@
       "tags": [
         "sibling-clones",
         "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "user-maintained-gems",
+      "path": "memory/user-maintained-gems.md",
+      "description": "Maintainer table for github-narrative-location + github-pr-assignment. Replace placeholders; Nick's metanorma row is the worked example.",
+      "type": "memory-user",
+      "scope": "personal-share",
+      "tags": [
+        "github",
+        "conventions",
+        "template"
       ],
       "version": "1.0.0",
       "author": "opoudjis",

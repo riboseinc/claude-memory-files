@@ -7,6 +7,13 @@
 # Per-file owners (from frontmatter; later rules override the catchall above)
 instructions/github-claude-attribution.md @opoudjis
 instructions/github-content-via-file.md @opoudjis
+instructions/github-metanorma-project.md @opoudjis
+instructions/github-narrative-location.md @opoudjis
+instructions/github-no-releases.md @opoudjis
+instructions/github-pr-assignment.md @opoudjis
 instructions/github-pr-title-issue-link.md @opoudjis
+instructions/memory-autoload-default.md @opoudjis
+instructions/narrate-plan.md @opoudjis
 instructions/paragraph-shape.md @opoudjis
 instructions/sibling-clones.md @opoudjis
+memory/user-maintained-gems.md @opoudjis
