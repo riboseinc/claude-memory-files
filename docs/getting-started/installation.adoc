@@ -1,0 +1,60 @@
+---
+title: Installation
+layout: default
+parent: Getting started
+nav_order: 1
+---
+
+= Installation
+
+Two install paths are planned for v1: a `curl | bash` one-liner per file (lowest friction), and a small companion plugin shipping slash commands (durable workflow). Both install to the same end state in `~/.claude/` and write to a user-side manifest at `~/.claude/.memory-files-manifest.json`.
+
+[NOTE]
+====
+Neither installer is shipped yet — they land in PR 7 (curl) and PR 8 (plugin). This page documents the planned UX; check back as those PRs merge.
+====
+
+== Path A — `curl | bash` (planned for PR 7)
+
+Each catalogue entry will have a copy-paste one-liner:
+
+[source,bash]
+----
+curl -fsSL https://raw.githubusercontent.com/riboseinc/claude-memory-files/main/tools/install.sh \
+  | bash -s -- instructions/github-pr-title-issue-link.md
+----
+
+The installer will:
+
+. Validate the path argument matches a supported subdirectory (`instructions/`, `memory/`, `settings-fragments/`, `project-claude-md/`, `rules/`).
+. Fetch the raw file from `main` (or `--ref <sha>` for pinning).
+. Parse frontmatter to read `type`, `target`, `autoload`, `name`.
+. Apply per-type install behaviour (file copy, JSON deep-merge, `@`-include in `CLAUDE.md`, etc.).
+. Record the install in `~/.claude/.memory-files-manifest.json` for later removal / update.
+
+== Path B — slash commands via a companion plugin (planned for PR 8)
+
+Install the plugin once:
+
+[source]
+----
+/plugin marketplace add riboseinc/claude-memory-files
+/plugin install memory-files-tools@claude-memory-files
+----
+
+Then four commands are available in any Claude Code session:
+
+* `/list-memory-files` — filterable picker (by `--tag`, `--scope`, `--team`).
+* `/install-memory-file <slug>` — install a file (same end-state as the curl path).
+* `/remove-memory-file <slug>` — uninstall.
+* `/submit-memory-file <local-path>` — scaffold frontmatter, run validator, open a PR.
+
+== Verification (post-install)
+
+After installing, start a fresh Claude Code session. The rule installed should load — verify by asking Claude something the rule covers ("What's your PR title convention?" if you installed `github-pr-title-issue-link`).
+
+== Why both install paths?
+
+Different friction curves. The curl path is the lowest-ceremony entry point for "I saw a file referenced in Microsoft Teams and want to try it once" — no plugin install required. The slash-command path is the durable workflow once you've bought in: it manages multiple installs, surfaces outdated entries, and exposes the submission flow.
+
+See https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965734[issue #1 comment 4] for the full rationale.

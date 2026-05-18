@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.3"
+gem "jekyll-asciidoc"
+gem "just-the-docs", "~> 0.7.0"
+
+group :jekyll_plugins do
+  gem "jekyll-include-cache"
+end

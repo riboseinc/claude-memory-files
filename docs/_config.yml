@@ -1,0 +1,63 @@
+# Jekyll configuration for the claude-memory-files docs site.
+# Uses Just the Docs theme — https://just-the-docs.com/
+# Precedent: lutaml/canon → lutaml.org/canon (AsciiDoc is the Ribose house standard).
+
+title: claude-memory-files
+description: Curated, modular memory and instruction files for Claude Code (Ribose orgs).
+url: https://riboseinc.github.io
+baseurl: /claude-memory-files
+
+repository: riboseinc/claude-memory-files
+
+theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs@v0.7.0
+color_scheme: light
+
+# AsciiDoc rendering (jekyll-asciidoc plugin)
+asciidoc: {}
+asciidoctor:
+  attributes:
+    idprefix: ''
+    idseparator: '-'
+    source-highlighter: rouge
+    icons: font
+    experimental: true
+
+# Just the Docs UI
+nav_fold: true
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s\-/]+/
+  rel_url: true
+  button: false
+
+aux_links:
+  "GitHub repository":
+    - "https://github.com/riboseinc/claude-memory-files"
+aux_links_new_tab: true
+
+footer_content: 'Copyright © 2026 Ribose Inc. Distributed under the <a href="https://github.com/riboseinc/claude-memory-files/blob/main/LICENSE">MIT License</a>.'
+
+last_edit_timestamp: true
+last_edit_time_format: "%Y-%m-%d"
+
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/riboseinc/claude-memory-files"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "tree"
+
+plugins:
+  - jekyll-asciidoc
+  - jekyll-include-cache
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle

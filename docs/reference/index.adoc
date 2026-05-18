@@ -1,0 +1,12 @@
+---
+title: Reference
+layout: default
+nav_order: 5
+has_children: true
+---
+
+= Reference
+
+Canonical reference pages for the schema, file types, validator rules, manifest format, and slash commands.
+
+D1 ships the link:frontmatter-schema/[Frontmatter schema] stub pointing at the in-repo `SCHEMA.md`. The rest of the reference set lands in D3.
