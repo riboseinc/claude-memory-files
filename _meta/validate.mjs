@@ -45,6 +45,7 @@ const TYPE_TO_CATEGORY = {
 const errors = [];
 const warnings = [];
 const filesValidated = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
+const allFrontmatters = new Map(); // name -> { fm, relPath }
 
 const error = (file, msg) => errors.push(`ERROR ${file}: ${msg}`);
 const warn = (file, msg) => warnings.push(`WARN  ${file}: ${msg}`);
@@ -204,7 +205,36 @@ async function validateFile(category, entry, validate, tagsVocab) {
     }
   }
 
+  if (frontmatter.name) {
+    allFrontmatters.set(frontmatter.name, { fm: frontmatter, relPath });
+  }
   filesValidated[category]++;
+}
+
+function checkCrossFileReferences() {
+  for (const [name, { fm, relPath }] of allFrontmatters) {
+    if (Array.isArray(fm['requires-companion'])) {
+      for (const companion of fm['requires-companion']) {
+        if (!allFrontmatters.has(companion)) {
+          warn(relPath, `requires-companion: "${companion}" not found in repo`);
+        }
+      }
+    }
+    if (Array.isArray(fm['supersedes'])) {
+      for (const sup of fm['supersedes']) {
+        if (!allFrontmatters.has(sup)) {
+          warn(relPath, `supersedes: "${sup}" not found in repo`);
+        }
+      }
+    }
+    if (Array.isArray(fm['conflicts-with'])) {
+      for (const conflict of fm['conflicts-with']) {
+        if (!allFrontmatters.has(conflict)) {
+          warn(relPath, `conflicts-with: "${conflict}" not found in repo (may be intentional if the conflicting file is external)`);
+        }
+      }
+    }
+  }
 }
 
 async function walkCategory(category, validate, tagsVocab) {
@@ -240,6 +270,8 @@ async function main() {
   for (const category of CATEGORIES) {
     await walkCategory(category, validate, tagsVocab);
   }
+
+  checkCrossFileReferences();
 
   if (warnings.length) {
     console.error(warnings.join('\n'));
