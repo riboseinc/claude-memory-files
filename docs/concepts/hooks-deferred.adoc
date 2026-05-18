@@ -1,0 +1,78 @@
+---
+title: Why hooks are deferred to v2
+layout: default
+parent: Concepts
+nav_order: 5
+---
+
+= Why `hooks/` is deferred to v2
+
+The repo lists `hooks/` as a category, but v1 ships zero hook files and the validator refuses any PR that adds a file under `hooks/` other than `.gitkeep`. This is deliberate. The gating rationale is in this page; the operational policy is in https://github.com/riboseinc/claude-memory-files/blob/main/SAFETY.md[`SAFETY.md`].
+
+== The CVE history
+
+Shared repos that ship hooks are a real supply-chain attack surface. The concrete precedent is **CVE-2025-59536** and **CVE-2026-21852** (Check Point Research, 2026):
+
+* Hooks defined in repo-controlled `.claude/settings.json` ran **automatically on session start**, *before* the trust dialog.
+* This allowed arbitrary shell execution plus `ANTHROPIC_BASE_URL` override, leading to API key exfiltration:
+
+[quote, Check Point Research]
+____
+When a victim clones the repository and runs `claude`, their API key would be sent directly to the attacker's server — before the victim decides to trust the directory.
+____
+
+Anthropic patched by deferring network calls until trust, hardening the trust dialog, and gating MCP. The class of risk doesn't disappear — it just becomes harder to trigger. Any repo that ships hooks needs a review process commensurate with that risk class.
+
+== Why v1's other categories are safe
+
+The v1 categories (`instructions/`, `memory/`, `settings-fragments/`, `project-claude-md/`, `rules/`) carry **no executable payload**. Installing one of these:
+
+* For markdown content (instructions, memory, project-claude-md, rules) → drops a file into `~/.claude/`. No shell runs.
+* For settings-fragments → merges JSON into `~/.claude/settings.json`. No shell runs.
+
+The blast radius of a malicious or sloppy PR in any of these categories is bounded to "Claude misbehaves in a particular way until the user removes the file." Annoying, recoverable, not exfiltrating credentials.
+
+Hooks change that calculus. Even a well-intentioned hook with a hardcoded `/Users/<me>/...` path is broken-by-default for everyone else; a malicious one is straight RCE.
+
+== The v2 policy (when `hooks/` opens)
+
+When `hooks/` opens for submissions, every entry must:
+
+. **Declare a mandatory `safety:` frontmatter field:**
++
+[source,yaml]
+----
+safety:
+  runs-shell: true
+  network: false
+  modifies-files: true
+  reads-credentials: false
+  paths-touched: ["${CLAUDE_PLUGIN_ROOT}/**"]
+----
++
+Reviewers audit the file against this declaration. The validator enforces the field is populated with all sub-keys.
+
+. **Pass a CI lint that rejects:**
+* Absolute paths (`/Users/...`, `/home/...`).
+* `$HOME` literals.
+* `curl | bash` patterns (any unauthenticated remote-code-execution).
+* Unsigned `curl` to non-allowlisted domains.
+* Writes outside `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_DATA}`, or `~/.claude/`.
+
+. **Get two-reviewer approval via CODEOWNERS.** Any PR touching `hooks/` requires the original author/owner **plus** the maintainer. Configured via branch protection rules referencing the auto-generated `.github/CODEOWNERS`.
+
+. **Ship as a plugin** (recommended, not enforced) so execution is sandboxed under `${CLAUDE_PLUGIN_ROOT}` rather than reaching arbitrary filesystem state. Anthropic's plugin spec uses `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}` precisely for hook portability.
+
+== Gate condition for v2 opening
+
+`hooks/` opens for contributions after **at least three v1 PRs have flowed through the schema and the local validator has had real exercise.** The point is to learn what falls out of the schema before adding the highest-risk category. If the frontmatter contract or validator turns out to be wrong, it's safer to discover that on memory/instruction files than on hooks.
+
+== In the meantime
+
+The v1 validator rejects any file added under `hooks/` other than `.gitkeep`. This is enforced both locally (run `node _meta/validate.mjs`) and in CI (the workflow runs the validator on every PR). The empty `hooks/` directory exists only so that the schema and installer code paths can be smoke-tested against the rejection case.
+
+== See also
+
+* https://github.com/riboseinc/claude-memory-files/blob/main/SAFETY.md[`SAFETY.md`] — the full v2 hook policy.
+* https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965619[Issue #1 comment 3] — the v1/v2 split rationale.
+* https://research.checkpoint.com/2026/rce-and-api-token-exfiltration-through-claude-code-project-files-cve-2025-59536/[Check Point Research writeup] — the CVE details.

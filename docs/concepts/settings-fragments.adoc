@@ -1,0 +1,90 @@
+---
+title: Settings-fragments
+layout: default
+parent: Concepts
+nav_order: 4
+---
+
+= Settings-fragments: deep-merge into `settings.json`
+
+Unlike the other v1 categories, a `settings-fragment` file isn't copied to a fixed location in `~/.claude/`. Its JSON content is **deep-merged** into your existing `~/.claude/settings.json`, with care taken to preserve every key the user already added by hand.
+
+== The fragment shape
+
+A `settings-fragment` body must contain exactly one JSON code block under a `## fragment` heading:
+
+[source,markdown]
+....
+## fragment
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec:*)",
+      "Bash(rake:*)"
+    ]
+  }
+}
+```
+....
+
+The validator at `_meta/validate.mjs` parses the fragment and rejects entries that touch keys outside `permissions.{allow, deny, ask}` and `env`. This is a v1 safety constraint — broader settings keys (e.g. hooks, model selection) need separate review.
+
+== Install: deep-merge with backup
+
+When you install a settings-fragment, `tools/install.sh` does this:
+
+1. **Backs up** the existing `~/.claude/settings.json` to `settings.json.bak.<timestamp>`.
+2. **Reads** the existing settings and the new fragment.
+3. **Deep-merges** with these specific behaviours:
+   * `permissions.allow[]`, `permissions.deny[]`, `permissions.ask[]` — concatenated and de-duplicated. Order is preserved by `jq`'s `unique` (which sorts).
+   * Top-level non-array keys (e.g. `env`) — shallow-merged; the fragment wins on conflicts.
+4. **Writes** the merged result back to `settings.json`.
+
+The merged-fragment JSON is recorded in `~/.claude/.memory-files-manifest.json` under the entry's `merged-fragment` field. This is the key to clean uninstall.
+
+== Uninstall: subtract the recorded fragment
+
+`tools/uninstall.sh` does the inverse: reads the manifest's `merged-fragment`, subtracts each entry (`allow[]`, `deny[]`, `ask[]`) from the current `settings.json`, and writes the result. **Hand-curated entries the user added separately survive** — only the manifest-recorded entries are removed.
+
+[NOTE]
+====
+This is the property the smoke test exercises:
+
+. Install `common-unix-reads-allowlist` (adds `Bash(grep:*)`, `Bash(find:*)`, etc.).
+. User edits `settings.json` to add a hand-curated `Bash(rg:*)`.
+. User uninstalls `common-unix-reads-allowlist`.
+. **Expected:** the seed's entries are gone; `Bash(rg:*)` remains.
+
+The smoke test runs this in CI on every PR (see `tools/test-install.sh`).
+====
+
+== Update: re-merge with subtraction first
+
+When upstream changes a fragment (e.g. adds a new permission, removes a stale one), `tools/install.sh --update <slug>` does:
+
+1. Subtracts the **old** manifest-recorded fragment first — so removed entries actually disappear, not linger.
+2. Merges the **new** upstream fragment.
+3. Records the new fragment in the manifest for the next round.
+
+Net effect: the update is transactional. Hand-curated entries still survive; upstream removals propagate cleanly.
+
+== Why these five categories merge instead of copy
+
+The deep-merge model exists specifically because `settings.json` is **shared state** — multiple seeds may legitimately add entries to the same keys. A naive "copy" model would either clobber existing settings (bad) or force users to manually splice multiple fragments together (worse). Deep-merge with manifest-recorded subtraction is the only model that handles the multi-fragment, multi-uninstall, multi-update case cleanly.
+
+== Worked v1 seeds
+
+The four v1 settings-fragments together cover the most common Ribose-style allowlists:
+
+* `ruby-bundler-allowlist` — `bundle exec:*`, `rake:*`, `rubocop:*`, `rspec:*`, `ruby -e:*`.
+* `github-cli-reads-allowlist` — `gh issue *`, `gh pr view:*`, `gh pr list:*`, `gh api:*`, `gh repo view:*` (read-only by design).
+* `common-unix-reads-allowlist` — `grep:*`, `find:*`, `ls:*`, `cat:*`, `head:*`, `tail:*`, `wc:*`.
+* `web-research-allowlist` — `WebSearch`, plus `WebFetch(domain:...)` for `docs.anthropic.com`, `code.claude.com`, `github.com`.
+
+== See also
+
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — settings-fragment type rules.
+* `tools/install.sh` and `tools/uninstall.sh` in the repo — the actual merge / subtract implementations.
+* `tools/test-install.sh` — the smoke test that exercises the hand-curated-entry preservation case.

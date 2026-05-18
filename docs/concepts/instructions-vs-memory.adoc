@@ -1,0 +1,66 @@
+---
+title: Instructions vs memory
+layout: default
+parent: Concepts
+nav_order: 3
+---
+
+= Instructions vs memory: the operational distinction
+
+Two of the v1 categories — `instructions/` and `memory/` — install to almost the same place under `~/.claude/`, but they behave very differently at session-load time. Picking the right one matters for both context-token cost and for how reliably the rule fires.
+
+== The mechanical difference
+
+[cols="1,2,2"]
+|===
+| Aspect | `instructions/` | `memory/`
+
+| Install target
+| `~/.claude/instructions/<name>.md`
+| `~/.claude/memory/<name>.md`
+
+| `@`-include in `CLAUDE.md`?
+| **Yes** — installer appends `@instructions/<name>.md` under a managed-block marker.
+| No.
+
+| Loaded every session?
+| **Yes** — counts toward each session's context budget.
+| Only via the auto-memory `MEMORY.md` index, or when an instruction file references it inline.
+
+| Frontmatter `autoload`
+| Forced `true`.
+| Forced `false`.
+
+| Typical content
+| Operational rules: "when X, do Y."
+| Reference data, feedback narratives, incident history, supporting context for an instruction.
+|===
+
+== When to use which
+
+**Use `instructions/`** when the rule needs to be present in every session before any work begins. Examples in the seed: `github-pr-title-issue-link` (PR titles must embed the issue URL), `narrate-plan` (state intent before each tool call), `sibling-clones` (clone to sibling dirs, not `/tmp`). These need to fire reliably or they don't fire at all.
+
+**Use `memory/`** when the content is a reference the assistant *consults*, not a rule it *always follows*. Examples in the seed: `feedback_pr_always_assigned` (PR assignment discipline — the operational rule is in the paired instruction file `github-pr-assignment`; this memory file holds the supporting narrative and incident history), `feedback_external_docs_framing` (docs-writing guidelines — only relevant when authoring external docs), `user-maintained-gems` (the data table consumed by two instruction files).
+
+A useful test: would a fresh Claude Code session need to load this file unconditionally to behave correctly? If yes, `instructions/`. If it can wait until the relevant work surfaces, `memory/`.
+
+== Token-cost considerations
+
+Every `@`-included instruction file costs context tokens in every session, whether the rule fires that session or not. The Anthropic guidance is to keep `CLAUDE.md` (and by extension everything @-included into it) under ~200 lines per file, and to consolidate where possible.
+
+This is why the v1 seed only marks a handful of files as instructions. The seed has 11 instructions vs. 7 memory files. As contributors add more rules, the discipline is: prefer `memory/` unless the rule must fire every session.
+
+== Instructions can reference memory
+
+The cleanest pattern is an instruction file that **points at** a memory file rather than inlining its content. Worked example in v1:
+
+* `instructions/github-narrative-location.md` — the operational rule. Universal-scope. Loaded every session.
+* `memory/user-maintained-gems.md` — the maintainer table data. Personal-share. Not auto-loaded; the instruction's body says "consult your installed `user-maintained-gems.md`".
+
+This keeps the always-loaded part short while putting the bulk content (potentially large tables, glossaries, incident histories) in memory files that load on demand. See link:../mechanism-and-data/[Mechanism and data] for the full pattern.
+
+== See also
+
+* link:../scope-rubric/[Scope rubric] — both categories use the same scope values.
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — the full frontmatter contract for both types.
+* https://code.claude.com/docs/en/memory[Anthropic's memory documentation] — authoritative on `CLAUDE.md`, `@`-imports, and the `MEMORY.md` cap.
