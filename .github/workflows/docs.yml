@@ -40,6 +40,14 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Check links with lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config lychee.toml './docs/_site/**/*.html'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Production build for deploy. Runs only on push to main / workflow_dispatch.
   build:
     if: github.event_name != 'pull_request'
