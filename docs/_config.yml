@@ -7,6 +7,12 @@ description: Curated, modular memory and instruction files for Claude Code (Ribo
 url: https://riboseinc.github.io
 baseurl: /claude-memory-files
 
+# Pretty URLs (trailing-slash directories) so cross-references that look like
+# `link:foo/[]` resolve to `foo/index.html` rather than the bare `foo.html`.
+# Matches lutaml/canon's URL pattern and makes lychee's local file resolution
+# work without rewriting every cross-reference.
+permalink: pretty
+
 repository: riboseinc/claude-memory-files
 
 theme: just-the-docs
