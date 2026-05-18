@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-18T14:02:07.868Z",
+  "generated": "2026-05-18T14:10:52.327Z",
   "files": [
     {
       "name": "github-claude-attribution",
@@ -194,6 +194,113 @@
       ]
     },
     {
+      "name": "feedback_external_docs_framing",
+      "path": "memory/feedback_external_docs_framing.md",
+      "description": "External Ruby-dev docs: scope statement, link out for inherited surface, cite POSIX/CLDR conventions, define deps + domain terms before use.",
+      "type": "memory-feedback",
+      "scope": "universal",
+      "tags": [
+        "docs",
+        "external-docs",
+        "asciidoc",
+        "conventions",
+        "ruby"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "feedback_handhold_when_frustrated",
+      "path": "memory/feedback_handhold_when_frustrated.md",
+      "description": "Switch to handholding mode when user shows distress (swearing, caps, repeated \"again\"); lead with strategic intent, then numbered steps.",
+      "type": "memory-feedback",
+      "scope": "personal-share",
+      "tags": [
+        "narration",
+        "conventions",
+        "handhold"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "feedback_metanorma_org_project_assignment",
+      "path": "memory/feedback_metanorma_org_project_assignment.md",
+      "description": "Incident-history memory supporting github-metanorma-project. Issues in metanorma/* repos must be added to org project",
+      "type": "memory-feedback",
+      "scope": "team",
+      "team": "metanorma",
+      "tags": [
+        "github",
+        "metanorma",
+        "issue"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "feedback_pr_always_assigned",
+      "path": "memory/feedback_pr_always_assigned.md",
+      "description": "PR-ownership discipline: never open a PR unassigned. Owned gems → self; non-owned gems → maintainer per user-maintained-gems.md.",
+      "type": "memory-feedback",
+      "scope": "team",
+      "tags": [
+        "github",
+        "pr",
+        "review"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ],
+      "requires-companion": [
+        "user-maintained-gems"
+      ]
+    },
+    {
+      "name": "feedback_pr_always_tagged_to_issue",
+      "path": "memory/feedback_pr_always_tagged_to_issue.md",
+      "description": "Every PR must reference a source issue (Closes",
+      "type": "memory-feedback",
+      "scope": "universal",
+      "tags": [
+        "github",
+        "pr",
+        "issue"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "ribose_conventions",
+      "path": "memory/ribose_conventions.md",
+      "description": "Ribose-org conventions for shared content: MS Teams (not Slack), redact non-Ribose names, AsciiDoc docs default, periodic memory review.",
+      "type": "memory-feedback",
+      "scope": "team",
+      "tags": [
+        "ribose",
+        "conventions"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
       "name": "user-maintained-gems",
       "path": "memory/user-maintained-gems.md",
       "description": "Maintainer table for github-narrative-location + github-pr-assignment. Replace placeholders; Nick's metanorma row is the worked example.",
@@ -203,6 +310,71 @@
         "github",
         "conventions",
         "template"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "ruby-gem",
+      "path": "project-claude-md/ruby-gem.md",
+      "description": "Starter CLAUDE.md for Ribose-style Ruby gem repos (Bundler + RSpec + RuboCop + batched release cadence).",
+      "type": "project-claude-md",
+      "scope": "team",
+      "project-type": "ruby-gem",
+      "tags": [
+        "ruby",
+        "bundler",
+        "template",
+        "ribose"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "feedback_jekyll_nav_registration",
+      "path": "rules/feedback_jekyll_nav_registration.md",
+      "description": "New Jekyll doc pages must be registered in the layout's navigation YAML; the sidebar is hand-maintained, not directory-walked.",
+      "type": "path-rule",
+      "scope": "team",
+      "paths": [
+        "_config.yml",
+        "_layouts/**",
+        "_includes/**",
+        "*.adoc"
+      ],
+      "tags": [
+        "jekyll",
+        "docs",
+        "nav"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "feedback_pr_chain_no_local_deps",
+      "path": "rules/feedback_pr_chain_no_local_deps.md",
+      "description": "Cross-repo Ruby PR sequences: downstream Gemfile.devel uses git+branch upstream PR ref, not bundle config local.* or path: Gemfile entries.",
+      "type": "path-rule",
+      "scope": "team",
+      "paths": [
+        "Gemfile",
+        "Gemfile.devel",
+        "*.gemspec"
+      ],
+      "tags": [
+        "bundler",
+        "ruby",
+        "gemfile",
+        "pr"
       ],
       "version": "1.0.0",
       "author": "opoudjis",
