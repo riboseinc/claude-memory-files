@@ -17,8 +17,9 @@ import * as YAML from 'yaml';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CATEGORIES = ['instructions', 'memory', 'settings-fragments', 'project-claude-md', 'rules'];
 
+// Output is deterministic — no timestamp field — so CI can drift-check via
+// `git diff --exit-code _meta/index.json` after regenerating.
 const index = {
-  generated: new Date().toISOString(),
   files: [],
   deprecated: [],
 };

@@ -73,9 +73,9 @@ Validator rejects PRs that change body without bumping `version:`, and rejects `
 
 ## Local validator
 
-`node _meta/validate.mjs` is the local pre-submission gate. It runs all the checks listed in [SCHEMA.md](SCHEMA.md) under "Validator rules". It ships with PR 2; until then, manual maintainer review covers the schema gate.
+`node _meta/validate.mjs` is the local pre-submission gate. It runs all the checks listed in [SCHEMA.md](SCHEMA.md) under "Validator rules". Run it before opening a PR.
 
-GitHub Actions CI for the validator is deferred to v2 — see [issue #1 comment 2](https://github.com/riboseinc/claude-memory-files/issues/1) for the rationale.
+GitHub Actions also runs the validator on every PR via `.github/workflows/validate.yml`. The CI workflow additionally checks that `.github/CODEOWNERS` and `_meta/index.json` have been regenerated (drift check) — if you modify any frontmatter `owners:` field or add/remove a content file, run `node _meta/build-codeowners.mjs` and `node _meta/build-index.mjs` locally and commit the regenerated outputs alongside your content change.
 
 ## License
 
