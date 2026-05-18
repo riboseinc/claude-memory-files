@@ -1,0 +1,41 @@
+---
+title: Frontmatter schema
+layout: default
+parent: Reference
+nav_order: 1
+---
+
+= Frontmatter schema
+
+The canonical human-readable contract lives in https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[SCHEMA.md] in the repo root. The machine-readable JSON Schema lives at https://github.com/riboseinc/claude-memory-files/blob/main/_meta/schema.json[`_meta/schema.json`] and is enforced by https://github.com/riboseinc/claude-memory-files/blob/main/_meta/validate.mjs[`_meta/validate.mjs`].
+
+This page will mirror `SCHEMA.md` content directly once D3 lands; for now it is a stub.
+
+== TL;DR
+
+Every content file in this repo starts with a YAML frontmatter block declaring at minimum:
+
+* `name` — kebab-case slug; must match filename minus `.md`.
+* `description` — ≤140 chars; used in the README catalogue and slash-command picker.
+* `type` — one of `instruction`, `memory-feedback`, `memory-reference`, `memory-project`, `memory-user`, `settings-fragment`, `project-claude-md`, `path-rule`, `hook`.
+* `scope` — `universal` / `team` / `personal-share`.
+* `author` — `name` and `github` handle.
+* `version` — semver; bumped on substantive content change.
+
+Plus type-specific fields:
+
+* `project-type:` for `project-claude-md` (e.g. `ruby-gem`, `jekyll-docs`).
+* `paths:` glob list for `path-rule`.
+* `safety:` object for `hook` (v2 only).
+
+Plus optional fields including `team:` (qualifier for scope: team), `owners:` (defaults to `[author.github]`; strict for personal-share), `requires-companion:`, `conflicts-with:`, `supersedes:`, `deprecated:`+`deprecated-reason:`+`deprecated-since:`+`superseded-by:`, `changelog:`, `tags:` (from `_meta/tags.txt` controlled vocabulary).
+
+== Validator
+
+`node _meta/validate.mjs` runs locally. CI enforcement is deferred to v2 — see https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965505[issue #1 comment 2] for rationale.
+
+== See also
+
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md` in the repo] — full contract with worked examples (once seeds land).
+* https://github.com/riboseinc/claude-memory-files/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] — the contribution flow that consumes this schema.
+* https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965505[Issue #1 comment 2] — design rationale (cursor-rules failure mode, novel `scope:` and `requires-companion:` fields).

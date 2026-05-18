@@ -1,0 +1,45 @@
+---
+title: Home
+layout: home
+nav_order: 1
+---
+
+= claude-memory-files
+
+Curated, modular memory and instruction files for https://claude.com/claude-code[Claude Code], maintained by Ribose for developers across our orgs (`riboseinc/*`, `metanorma/*`, `lutaml/*`, `plurimath/*`, `relaton/*`).
+
+[NOTE]
+====
+This site is scaffolding (D1). Foundational pages are live; concepts and task-based guides land in D2 and D3 as the implementation progresses. See https://github.com/riboseinc/claude-memory-files/issues/1[design issue #1] for the full roadmap.
+====
+
+== Get started
+
+* link:getting-started/installation/[**Installation**] — both planned install paths (curl one-liner, companion plugin) and a quick verification.
+* link:reference/frontmatter-schema/[**Frontmatter schema**] — the contract every file in the repo must follow.
+
+== Audience signposts
+
+The full task-based walkthroughs land in D3; for now use these starting points:
+
+* **Consumer** — install a file someone wrote → link:getting-started/installation/[Installation].
+* **Contributor** — share a file you've written → link:reference/frontmatter-schema/[Frontmatter schema] + https://github.com/riboseinc/claude-memory-files/blob/main/CONTRIBUTING.md[CONTRIBUTING.md].
+* **Maintainer** — review PRs or ship releases → https://github.com/riboseinc/claude-memory-files/issues/1[issue #1] (foundational) and https://github.com/riboseinc/claude-memory-files/issues/2[issue #2] (update regulation).
+
+== Learning path (sketched; walkthroughs in D2/D3)
+
+. **Level 1** — Install one file via curl; verify it loads.
+. **Level 2** — Install several files; mix `universal` and `team` scopes.
+. **Level 3** — Customise a `personal-share` template for your own setup.
+. **Level 4** — Submit your own file via `/submit-memory-file`.
+. **Level 5** — Help maintain a category; review PRs.
+
+== What this repo deliberately does NOT host
+
+Slash commands, subagents, skills, MCP server configs, output styles, and keybindings are abundantly catalogued by https://github.com/hesreallyhim/awesome-claude-code[awesome-claude-code] and similar aggregators. We focus on the white-space categories: memory, instructions, settings fragments, project CLAUDE.md templates, and path-scoped rules. See the https://github.com/riboseinc/claude-memory-files#further-reading-and-exemplar-listings[README "Further reading"] for the curated aggregator list.
+
+== Design history
+
+* https://github.com/riboseinc/claude-memory-files/issues/1[Issue #1] — foundational design (seven comments covering distribution model, scope, schema, hooks-deferred, install paths, seed set, roadmap).
+* https://github.com/riboseinc/claude-memory-files/issues/2[Issue #2] — update regulation policy.
+* https://github.com/riboseinc/claude-memory-files[Repo on GitHub].

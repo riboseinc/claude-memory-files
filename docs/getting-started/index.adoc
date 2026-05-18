@@ -1,0 +1,12 @@
+---
+title: Getting started
+layout: default
+nav_order: 2
+has_children: true
+---
+
+= Getting started
+
+How to install your first file from this repo. The link:installation/[Installation] page walks through both planned install paths (curl and slash command).
+
+This section will expand in D2 with a Quick start walkthrough and a "Picking your first file" decision guide.
