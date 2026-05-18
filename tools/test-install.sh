@@ -127,5 +127,93 @@ FINAL_COUNT="$(jq '.files | length' "${MANIFEST}")"
 [[ "${FINAL_COUNT}" -eq 0 ]] || fail "manifest not empty after all uninstalls (${FINAL_COUNT} left)"
 pass "manifest empty after all uninstalls"
 
+# Test 5: --update flow (drift detection + decision matrix)
+header "Update: clean local + version bump → overwrite"
+
+# Install fresh
+"${INSTALL}" --repo-root "${REPO_ROOT}" instructions/github-pr-title-issue-link.md >/dev/null
+ORIG_HASH="$(jq -r '.files["github-pr-title-issue-link"]["installed-hash"]' "${MANIFEST}")"
+
+# Build a fake "upstream" with the file mutated to v1.1.0
+UPSTREAM_DIR="$(mktemp -d)"
+mkdir -p "${UPSTREAM_DIR}/instructions"
+cp "${REPO_ROOT}/instructions/github-pr-title-issue-link.md" "${UPSTREAM_DIR}/instructions/"
+sed -i.bak 's/^version: 1\.0\.0$/version: 1.1.0/' "${UPSTREAM_DIR}/instructions/github-pr-title-issue-link.md"
+rm -f "${UPSTREAM_DIR}/instructions/github-pr-title-issue-link.md.bak"
+echo "" >> "${UPSTREAM_DIR}/instructions/github-pr-title-issue-link.md"
+echo "*[Update smoke test: extra body line]*" >> "${UPSTREAM_DIR}/instructions/github-pr-title-issue-link.md"
+
+"${INSTALL}" --update --repo-root "${UPSTREAM_DIR}" github-pr-title-issue-link >/dev/null
+NEW_HASH="$(jq -r '.files["github-pr-title-issue-link"]["installed-hash"]' "${MANIFEST}")"
+[[ "${NEW_HASH}" != "${ORIG_HASH}" ]] || fail "manifest hash should change after update"
+HIST_COUNT="$(jq '.files["github-pr-title-issue-link"].history | length' "${MANIFEST}")"
+[[ "${HIST_COUNT}" -eq 2 ]] || fail "expected 2 history events after update, got ${HIST_COUNT}"
+LAST_EVENT="$(jq -r '.files["github-pr-title-issue-link"].history[-1].event' "${MANIFEST}")"
+[[ "${LAST_EVENT}" == "update" ]] || fail "last history event should be 'update', got '${LAST_EVENT}'"
+pass "clean local + version bump → overwrite + manifest history appended"
+
+rm -rf "${UPSTREAM_DIR}"
+
+header "Update: edited local → abort (without --force)"
+
+# Hand-edit the installed file to simulate user edits
+echo "" >> "${SANDBOX}/instructions/github-pr-title-issue-link.md"
+echo "*[Local hand-edit]*" >> "${SANDBOX}/instructions/github-pr-title-issue-link.md"
+
+UPSTREAM_DIR2="$(mktemp -d)"
+mkdir -p "${UPSTREAM_DIR2}/instructions"
+cp "${REPO_ROOT}/instructions/github-pr-title-issue-link.md" "${UPSTREAM_DIR2}/instructions/"
+sed -i.bak 's/^version: 1\.0\.0$/version: 1.2.0/' "${UPSTREAM_DIR2}/instructions/github-pr-title-issue-link.md"
+rm -f "${UPSTREAM_DIR2}/instructions/github-pr-title-issue-link.md.bak"
+echo "*[Another upstream bump]*" >> "${UPSTREAM_DIR2}/instructions/github-pr-title-issue-link.md"
+
+OUTPUT=$("${INSTALL}" --update --repo-root "${UPSTREAM_DIR2}" github-pr-title-issue-link 2>&1)
+echo "${OUTPUT}" | grep -qi "aborted" || fail "expected abort message; got: ${OUTPUT}"
+pass "edited local → abort without --force"
+
+header "Update: --force overrides abort on edited local"
+
+"${INSTALL}" --update --force --repo-root "${UPSTREAM_DIR2}" github-pr-title-issue-link >/dev/null
+HIST_COUNT_AFTER="$(jq '.files["github-pr-title-issue-link"].history | length' "${MANIFEST}")"
+[[ "${HIST_COUNT_AFTER}" -eq 3 ]] || fail "expected 3 history events after --force update, got ${HIST_COUNT_AFTER}"
+pass "--force overrides abort; manifest history appended"
+
+rm -rf "${UPSTREAM_DIR2}"
+
+header "Update: personal-share is no-op without --upstream"
+
+"${INSTALL}" --repo-root "${REPO_ROOT}" memory/user-maintained-gems.md >/dev/null
+[[ "$(jq -r '.files["user-maintained-gems"].forked' "${MANIFEST}")" == "true" ]] \
+  || fail "personal-share should be marked forked: true"
+
+PS_HASH_BEFORE="$(jq -r '.files["user-maintained-gems"]["installed-hash"]' "${MANIFEST}")"
+
+UPSTREAM_DIR3="$(mktemp -d)"
+mkdir -p "${UPSTREAM_DIR3}/memory"
+cp "${REPO_ROOT}/memory/user-maintained-gems.md" "${UPSTREAM_DIR3}/memory/"
+sed -i.bak 's/^version: 1\.0\.0$/version: 1.1.0/' "${UPSTREAM_DIR3}/memory/user-maintained-gems.md"
+rm -f "${UPSTREAM_DIR3}/memory/user-maintained-gems.md.bak"
+echo "" >> "${UPSTREAM_DIR3}/memory/user-maintained-gems.md"
+echo "[Upstream addition for forked test]" >> "${UPSTREAM_DIR3}/memory/user-maintained-gems.md"
+
+OUTPUT=$("${INSTALL}" --update --repo-root "${UPSTREAM_DIR3}" user-maintained-gems 2>&1)
+echo "${OUTPUT}" | grep -q "no-op for forked" || fail "expected no-op message; got: ${OUTPUT}"
+PS_HASH_AFTER="$(jq -r '.files["user-maintained-gems"]["installed-hash"]' "${MANIFEST}")"
+[[ "${PS_HASH_BEFORE}" == "${PS_HASH_AFTER}" ]] || fail "personal-share hash should not change on no-op update"
+pass "personal-share --update is no-op without --upstream"
+
+header "Update: --upstream forces overwrite of personal-share"
+
+"${INSTALL}" --update --upstream --repo-root "${UPSTREAM_DIR3}" user-maintained-gems >/dev/null
+PS_HASH_FINAL="$(jq -r '.files["user-maintained-gems"]["installed-hash"]' "${MANIFEST}")"
+[[ "${PS_HASH_FINAL}" != "${PS_HASH_BEFORE}" ]] || fail "personal-share hash should change with --upstream"
+pass "personal-share --update --upstream overwrites the local fork"
+
+rm -rf "${UPSTREAM_DIR3}"
+
+# Clean up update-test installs
+"${UNINSTALL}" github-pr-title-issue-link >/dev/null
+"${UNINSTALL}" user-maintained-gems >/dev/null
+
 echo
-echo "✓ All install/uninstall smoke tests passed"
+echo "✓ All install/uninstall/update smoke tests passed"

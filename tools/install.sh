@@ -25,6 +25,8 @@ PROJECT_DIR=""
 FORCE=0
 SOURCE_PATH=""
 REPO_ROOT=""  # if set, read from local checkout instead of fetching
+UPDATE=0      # if 1, treat SOURCE_PATH as slug and run the update flow
+UPSTREAM=0    # for --update on personal-share: force overwrite of local fork
 
 usage() {
   cat <<'EOF'
@@ -44,6 +46,15 @@ Options:
   --project <dir>       Required for type: project-claude-md;
                         optional override for type: path-rule.
   --force               Overwrite existing target file.
+  --update              Update an already-installed file by slug. The positional
+                        argument is treated as a slug (not a path) and the
+                        source path is read from the manifest. Drift is detected
+                        by hash; the decision matrix (per the plan) decides
+                        overwrite vs abort. Abort cases require --force to
+                        proceed.
+  --upstream            For --update on a scope: personal-share entry, force
+                        overwrite from upstream (otherwise --update is a no-op
+                        for forked entries).
   -h, --help            Show this help.
 
 Environment:
@@ -53,6 +64,9 @@ Examples:
   install.sh instructions/github-pr-title-issue-link.md
   install.sh --ref v1.2.0 instructions/github-pr-title-issue-link.md
   install.sh --project ~/my-gem project-claude-md/ruby-gem.md
+  install.sh --update github-pr-title-issue-link
+  install.sh --update --force github-pr-title-issue-link
+  install.sh --update --upstream user-maintained-gems
 EOF
 }
 
@@ -70,6 +84,206 @@ sha256() {
   fi
 }
 
+# semver bump category: outputs none|patch|minor|major|unknown
+semver_category() {
+  local from="$1" to="$2"
+  [[ -z "$from" || -z "$to" ]] && { echo "unknown"; return; }
+  [[ "$from" == "$to" ]] && { echo "none"; return; }
+  local fM fm fp tM tm tp
+  IFS='.' read -r fM fm fp <<< "$from"
+  IFS='.' read -r tM tm tp <<< "$to"
+  if [[ "$fM" != "$tM" ]]; then echo "major"
+  elif [[ "$fm" != "$tm" ]]; then echo "minor"
+  else echo "patch"
+  fi
+}
+
+# Replay settings-fragment merge on update: subtract the old manifest-recorded
+# fragment, then merge the new upstream fragment.
+update_settings_fragment_action() {
+  local slug="$1" tmp_file="$2" target="$3"
+
+  local body new_frag
+  body="$(awk '/^---$/{c++; next} c>=2' "$tmp_file")"
+  new_frag="$(printf '%s\n' "$body" | awk '
+    /^## fragment[[:space:]]*$/ { in_section = 1; next }
+    in_section && /^```json[[:space:]]*$/ { in_block = 1; next }
+    in_block && /^```[[:space:]]*$/ { exit }
+    in_block { print }
+  ')"
+  [[ -z "$new_frag" ]] && err "Upstream settings-fragment missing '## fragment' json block"
+  printf '%s' "$new_frag" | jq -e . >/dev/null 2>&1 \
+    || err "Upstream settings-fragment JSON is invalid"
+
+  local old_frag
+  old_frag="$(jq -r --arg s "$slug" '.files[$s]."merged-fragment"' "$MANIFEST")"
+
+  local backup="${target}.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+  cp "$target" "$backup"
+  info "  Backed up settings.json → $backup"
+
+  # Subtract old fragment first (so removed entries actually go away)
+  if [[ "$old_frag" != "null" && -n "$old_frag" ]]; then
+    local unmerged
+    unmerged="$(jq -s '
+      .[0] as $current | .[1] as $old |
+      $current |
+      if $old.permissions.allow then .permissions.allow = ((.permissions.allow // []) - $old.permissions.allow) else . end |
+      if $old.permissions.deny then .permissions.deny = ((.permissions.deny // []) - $old.permissions.deny) else . end |
+      if $old.permissions.ask then .permissions.ask = ((.permissions.ask // []) - $old.permissions.ask) else . end
+    ' "$target" <(printf '%s' "$old_frag"))"
+    printf '%s\n' "$unmerged" > "$target"
+  fi
+
+  # Then merge new fragment
+  local merged
+  merged="$(jq -s '
+    .[0] as $current | .[1] as $frag |
+    ($current * $frag) |
+    if $frag.permissions.allow then
+      .permissions.allow = ((($current.permissions.allow // []) + ($frag.permissions.allow // [])) | unique)
+    else . end |
+    if $frag.permissions.deny then
+      .permissions.deny = ((($current.permissions.deny // []) + ($frag.permissions.deny // [])) | unique)
+    else . end |
+    if $frag.permissions.ask then
+      .permissions.ask = ((($current.permissions.ask // []) + ($frag.permissions.ask // [])) | unique)
+    else . end
+  ' "$target" <(printf '%s' "$new_frag"))"
+  printf '%s\n' "$merged" > "$target"
+
+  # Bump manifest's merged-fragment to the new one
+  jq --arg s "$slug" --argjson frag "$new_frag" '.files[$s]."merged-fragment" = $frag' "$MANIFEST" > "${MANIFEST}.tmp" \
+    && mv "${MANIFEST}.tmp" "$MANIFEST"
+}
+
+# --update flow: drift detection + decision matrix + per-type overwrite
+do_update() {
+  local slug="$1"
+  [[ -f "$MANIFEST" ]] || err "Manifest not found at $MANIFEST"
+
+  local entry
+  entry="$(jq --arg s "$slug" '.files[$s] // empty' "$MANIFEST")"
+  [[ -z "$entry" || "$entry" == "null" ]] && err "$slug not installed (not found in manifest)"
+
+  local source_path local_path installed_hash type forked
+  source_path="$(printf '%s' "$entry" | jq -r '."source-path"')"
+  local_path="$(printf '%s' "$entry" | jq -r '."local-path"')"
+  installed_hash="$(printf '%s' "$entry" | jq -r '."installed-hash"')"
+  type="$(printf '%s' "$entry" | jq -r '.type')"
+  forked="$(printf '%s' "$entry" | jq -r '.forked')"
+
+  # Personal-share short-circuit: forked entries don't auto-update
+  if [[ "$forked" == "true" && $UPSTREAM -eq 0 ]]; then
+    info "$slug is scope: personal-share (forked at install)."
+    info "  --update is a no-op for forked entries. Pass --upstream to overwrite from upstream."
+    info "  Local: $local_path"
+    return 0
+  fi
+
+  # Fetch upstream
+  local up_tmp resolved_sha
+  up_tmp="$(mktemp)"
+  if [[ -n "$REPO_ROOT" ]]; then
+    local src="$REPO_ROOT/$source_path"
+    [[ -f "$src" ]] || { rm -f "$up_tmp"; err "Local source not found: $src"; }
+    cp "$src" "$up_tmp"
+    if command -v git >/dev/null 2>&1 && [[ -d "$REPO_ROOT/.git" ]]; then
+      resolved_sha="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo "$REF")"
+    else
+      resolved_sha="$REF"
+    fi
+  else
+    local url="$BASE_RAW/$REF/$source_path"
+    info "Fetching $url"
+    curl -fsSL "$url" -o "$up_tmp" || { rm -f "$up_tmp"; err "Failed to fetch $url"; }
+    resolved_sha="$REF"
+    if [[ "$REF" == "main" || "$REF" == "HEAD" ]] && command -v gh >/dev/null 2>&1; then
+      resolved_sha="$(gh api "/repos/$REPO/commits/$REF" --jq '.sha' 2>/dev/null || echo "$REF")"
+    fi
+  fi
+
+  # Parse upstream
+  local up_body up_version up_hash
+  up_body="$(awk '/^---$/{c++; next} c>=2' "$up_tmp")"
+  up_version="$(awk '/^---$/{c++; next} c==1 && /^version:/{sub("^[^:]*:[ \t]*", ""); print; exit}' "$up_tmp")"
+  up_hash="sha256:$(printf '%s' "$up_body" | sha256)"
+
+  # No drift?
+  if [[ "$up_hash" == "$installed_hash" ]]; then
+    info "$slug: already up to date (upstream hash matches installed hash)."
+    rm -f "$up_tmp"
+    return 0
+  fi
+
+  # Local-edit check
+  local local_edited="no" inst_version=""
+  if [[ -f "$local_path" && "$type" != "settings-fragment" ]]; then
+    local inst_body local_hash
+    inst_body="$(awk '/^---$/{c++; next} c>=2' "$local_path")"
+    inst_version="$(awk '/^---$/{c++; next} c==1 && /^version:/{sub("^[^:]*:[ \t]*", ""); print; exit}' "$local_path")"
+    local_hash="sha256:$(printf '%s' "$inst_body" | sha256)"
+    [[ "$local_hash" != "$installed_hash" ]] && local_edited="yes"
+  elif [[ "$type" == "settings-fragment" ]]; then
+    # For settings-fragment, "local edited" means a user-added entry beyond the
+    # manifest-recorded fragment exists. Skip the body-hash check; the update
+    # path subtracts the old fragment and merges the new one, preserving
+    # user-added entries by construction.
+    inst_version=""
+  fi
+
+  local bump
+  bump="$(semver_category "$inst_version" "$up_version")"
+
+  info "  Installed: ${inst_version:-?} (${installed_hash:0:18}...)"
+  info "  Upstream:  ${up_version:-?} (${up_hash:0:18}...) [${bump} bump]"
+  info "  Local edited: ${local_edited}"
+
+  # Decision matrix: overwrite for clean local; abort otherwise unless --force
+  if [[ "$local_edited" == "yes" && $FORCE -eq 0 ]]; then
+    info ""
+    info "✗ $slug: update aborted — local copy has been hand-edited since install."
+    info "  Pass --force to overwrite local edits, or merge by hand."
+    rm -f "$up_tmp"
+    return 0
+  fi
+
+  # Apply overwrite per type
+  case "$type" in
+    instruction|memory-feedback|memory-reference|memory-project|memory-user|path-rule)
+      cp "$up_tmp" "$local_path"
+      info "  Overwrote $local_path" ;;
+    project-claude-md)
+      printf '%s\n' "$up_body" > "$local_path"
+      info "  Overwrote $local_path (frontmatter stripped)" ;;
+    settings-fragment)
+      update_settings_fragment_action "$slug" "$up_tmp" "$local_path" ;;
+    *)
+      rm -f "$up_tmp"; err "Unknown type in manifest: $type" ;;
+  esac
+
+  # Update manifest: bump installed-hash + upstream-ref + installed-at; append history event
+  local now
+  now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  jq --arg s "$slug" \
+     --arg hash "$up_hash" \
+     --arg ref "$resolved_sha" \
+     --arg now "$now" '
+       .files[$s]."installed-hash" = $hash |
+       .files[$s]."upstream-ref" = $ref |
+       .files[$s]."installed-at" = $now |
+       .files[$s].history += [{event: "update", ref: $ref, at: $now}]
+     ' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+
+  rm -f "$up_tmp"
+
+  info ""
+  info "✓ Updated $slug → ${up_version:-?} (was ${inst_version:-?}, ${bump} bump)"
+  info "  Target:   $local_path"
+  info "  Manifest: $MANIFEST"
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -77,6 +291,8 @@ while [[ $# -gt 0 ]]; do
     --repo-root) REPO_ROOT="$2"; shift 2 ;;
     --project) PROJECT_DIR="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
+    --update) UPDATE=1; shift ;;
+    --upstream) UPSTREAM=1; shift ;;
     -h|--help) usage; exit 0 ;;
     -*) err "Unknown option: $1" ;;
     *)
@@ -85,14 +301,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -z "$SOURCE_PATH" ]] && { usage; err "Missing required <path/to/file.md>"; }
+[[ -z "$SOURCE_PATH" ]] && { usage; err "Missing required <path/to/file.md> (or slug, with --update)"; }
 
 # Tool check
 for cmd in curl awk jq mktemp mkdir; do
   command -v "$cmd" >/dev/null 2>&1 || err "Required tool not found: $cmd"
 done
 
-# Path category check
+# --update mode: SOURCE_PATH is a slug; dispatch to update flow and exit
+if [[ $UPDATE -eq 1 ]]; then
+  do_update "$SOURCE_PATH"
+  exit 0
+fi
+
+# Path category check (install mode only)
 case "$SOURCE_PATH" in
   instructions/*.md|memory/*.md|settings-fragments/*.md|project-claude-md/*.md|rules/*.md)
     ;;

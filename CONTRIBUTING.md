@@ -63,13 +63,23 @@ See [issue #2](https://github.com/riboseinc/claude-memory-files/issues/2) for th
 
 ## Updating an existing file
 
-The `--update` mode in the installer (shipping with PR 9) handles drift detection and per-version-bump prompts. Semver rules for PRs that change existing files:
+The `--update` mode in `tools/install.sh` handles drift detection and decision-matrix-driven overwrite. Semver rules for PRs that change existing files:
 
-- **patch** (`x.y.Z`) — typo/clarification, no behaviour change → client `--update` is silent.
-- **minor** (`x.Y.0`) — additive (new example, scope broadened) → client `--update` prompts with diff.
-- **major** (`X.0.0`) — semantics change, scope change, deprecation → client `--update` requires explicit ack.
+- **patch** (`x.y.Z`) — typo/clarification, no behaviour change.
+- **minor** (`x.Y.0`) — additive (new example, scope broadened).
+- **major** (`X.0.0`) — semantics change, scope change, deprecation.
 
-Validator rejects PRs that change body without bumping `version:`, and rejects `version:` regression or flat-on-body-change.
+The validator rejects PRs that change body without bumping `version:` (rule TBD; currently the version-monotonicity check is documented in `SCHEMA.md` and applied by reviewers; full enforcement lands with the broader ticket #2 work).
+
+Client `--update` behavior (drift + abort matrix):
+
+| Local edited? | Bump | Action |
+|---|---|---|
+| no | any | silent overwrite; manifest history appended |
+| yes | any | abort; `--force` overrides |
+| `forked: true` (personal-share) | any | no-op; `--upstream` forces overwrite |
+
+Run via `bash tools/install.sh --update <slug>` (locally) or via the `/update-memory-file` slash command (inside Claude Code). See `--help` on the script for full flag reference.
 
 ## Local validator
 
