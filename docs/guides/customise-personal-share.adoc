@@ -1,0 +1,102 @@
+---
+title: Customise a personal-share template
+layout: default
+parent: Guides
+nav_order: 4
+---
+
+= Customise a personal-share template
+
+`personal-share` files ship as skeletons or templates — they contain placeholders the user is expected to replace, plus a worked example from the original author. This guide walks through customising `memory/user-maintained-gems.md`, the canonical worked example.
+
+== What `personal-share` means
+
+The link:../../concepts/scope-rubric/[scope rubric] explains it in full. The relevant property for this guide:
+
+* On install, `personal-share` entries are marked `forked: true` in the manifest.
+* `--update` is a **no-op** for forked entries by default. The expectation is you'll customise the file on install and never want upstream changes to overwrite your customisations.
+* To force overwrite from upstream (e.g. the template added a new placeholder column), pass `--upstream` to `--update`.
+
+== Step 1: install the template
+
+[source,bash]
+----
+curl -fsSL https://raw.githubusercontent.com/riboseinc/claude-memory-files/main/tools/install.sh \
+  | bash -s -- memory/user-maintained-gems.md
+----
+
+This lands at `~/.claude/memory/user-maintained-gems.md`.
+
+== Step 2: open it and replace placeholders
+
+The shipped file has these placeholders:
+
+* `<your-github-handle>` — replace with your handle (e.g. `opoudjis`, `ronaldtse`, `andrew2net`).
+* The "Gems / repos YOU maintain" section — replace the `EXAMPLE — Nick's metanorma list` block with your own gem list.
+* The "Default maintainers for gems you do NOT maintain" table — replace `EXAMPLE — Nick's default-maintainer table` with your own routing.
+
+Nick's metanorma worked example is left in the file so you can see the format and conventions; you overwrite it with your own data.
+
+== Step 3: confirm the rules that depend on it now resolve
+
+Two instruction files declare `requires-companion: [user-maintained-gems]`:
+
+* `github-narrative-location` — narrative routing for owned vs non-owned gems.
+* `github-pr-assignment` — PR assignment routing.
+
+If you have either installed, they now have their data and will start firing correctly. Verify in a fresh Claude Code session by asking, e.g.:
+
+> "If I open a PR on metanorma-iso, who should the assignee be?"
+
+The answer should reflect your filled-in maintainer table.
+
+== Step 4: leave it alone (mostly)
+
+After customisation, the manifest treats your installed copy as a fork. Running `/update-memory-file user-maintained-gems` (or `install.sh --update user-maintained-gems`) is a no-op:
+
+[source]
+----
+$ ./tools/install.sh --update user-maintained-gems
+user-maintained-gems is scope: personal-share (forked at install).
+  --update is a no-op for forked entries. Pass --upstream to overwrite from upstream.
+  Local: /Users/you/.claude/memory/user-maintained-gems.md
+----
+
+Your customisations are safe.
+
+== When you DO want to pull upstream changes
+
+If the upstream template gets a structural change (new placeholder, new column, reorganised sections), you might want to re-skeletonise. Two options:
+
+**Option A — `--upstream` overwrite** (destructive; loses your customisations):
+
+[source,bash]
+----
+./tools/install.sh --update --upstream user-maintained-gems
+----
+
+You'd then redo your customisations against the new template.
+
+**Option B — diff + manual merge** (preferred):
+
+[source,bash]
+----
+# Fetch the new upstream into a temp file
+curl -fsSL https://raw.githubusercontent.com/riboseinc/claude-memory-files/main/memory/user-maintained-gems.md \
+  > /tmp/upstream.md
+
+# Diff against your customised local copy
+diff -u ~/.claude/memory/user-maintained-gems.md /tmp/upstream.md
+----
+
+Then merge the upstream's structural changes into your customised copy by hand.
+
+== Why this is the design
+
+The mechanism/data split (link:../../concepts/mechanism-and-data/[mechanism-and-data concept page]) is built around the assumption that **data is personal but mechanisms are shared**. A naive design would either inline the data into the mechanism (making everything personal) or share both (forcing every user to fork the universal rule). The `requires-companion` pattern with `personal-share` data files is the third path — and the `forked: true` manifest field is what keeps your customisations stable through upstream churn.
+
+== See also
+
+* link:../../concepts/scope-rubric/[Scope rubric].
+* link:../../concepts/mechanism-and-data/[Mechanism and data].
+* link:../updating-installed-files/[Updating installed files].

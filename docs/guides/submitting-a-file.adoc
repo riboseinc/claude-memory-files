@@ -1,0 +1,107 @@
+---
+title: Submitting your own file
+layout: default
+parent: Guides
+nav_order: 3
+---
+
+= Submitting your own file
+
+This guide walks through `/submit-memory-file <local-path>`, the slash command that scaffolds frontmatter, runs the validator, and opens a PR for a new memory file. You can also do all of this by hand against the cloned repo; the slash command just automates the steps.
+
+== Prerequisite
+
+The companion plugin must be installed (link:../using-slash-commands/[Using the slash commands]). You also need `gh` CLI authenticated and write access to the repo (or a fork).
+
+== Step 1: pick a file to share
+
+A file in your local `~/.claude/` setup that you think would help others. Read link:../../concepts/scope-rubric/[the scope rubric] first to know which category it belongs in.
+
+* If the rule fires every session: it's an `instruction`.
+* If it's reference / supporting narrative: it's `memory-*`.
+* If it's a JSON settings snippet: it's a `settings-fragment`.
+* If it's a project starter CLAUDE.md: it's a `project-claude-md`.
+* If it's path-scoped via Anthropic's `paths:` mechanism: it's a `path-rule`.
+
+== Step 2: invoke the slash command
+
+[source]
+----
+/submit-memory-file ~/.claude/instructions/my-new-rule.md
+----
+
+The command reads your local file. If the file already has frontmatter, the command parses it. If not, the command drafts a starting frontmatter and walks you through:
+
+* **`name`** — kebab- or snake-case slug (suggested from filename).
+* **`description`** — one-line summary, ≤140 chars. The command may draft a candidate; you revise.
+* **`type`** — picked from the category you specified.
+* **`scope`** — `universal`, `team` (optional `team:` qualifier), or `personal-share`.
+* **`tags`** — 1–5 from the controlled vocabulary in `_meta/tags.txt`.
+* **`author.name`** + **`author.github`** — your handle (looked up via `gh api user`).
+* **`owners`** — defaults to `[author.github]`; for `personal-share`, validator enforces this length-1.
+* **`version: 1.0.0`** — semver.
+
+== Step 3: clone the repo as sibling
+
+The command clones `riboseinc/claude-memory-files` into a sibling directory (per the `sibling-clones` convention if installed), creates a branch named `feat/<slug>` or `feat/seed-<category>-<slug>`, and drops your file into the right category subdirectory.
+
+== Step 4: validate
+
+The command runs:
+
+[source,bash]
+----
+node _meta/validate.mjs
+----
+
+If the validator reports errors (missing required field, description too long, unknown tag, etc.), the command surfaces them in chat and lets you fix the frontmatter or body before continuing.
+
+== Step 5: regenerate generated files
+
+[source,bash]
+----
+node _meta/build-index.mjs
+node _meta/build-codeowners.mjs
+----
+
+CI drift-checks both `_meta/index.json` and `.github/CODEOWNERS` against the regenerated output, so these need to be committed alongside your content file.
+
+== Step 6: commit + push + PR
+
+The command writes the commit message and PR body to temp files (per the `github-content-via-file` convention — never inline / heredoc), then:
+
+[source,bash]
+----
+git commit -F /tmp/commit-msg.txt
+git push -u origin <branch-name>
+gh pr create --assignee opoudjis \
+  --title "feat: add <slug>: https://github.com/riboseinc/claude-memory-files/issues/1" \
+  --body-file /tmp/pr-body.md
+----
+
+The PR title embeds the issue URL per the `github-pr-title-issue-link` convention. The PR body is one line referencing issue #1 plus the Claude attribution footer (per `github-claude-attribution`).
+
+== Step 7: review
+
+CI runs the validator + smoke tests automatically. The maintainer (`@opoudjis`) reviews. For `scope: universal` PRs, branch protection (when configured) requires a second reviewer. For `personal-share`, only the named owner reviews.
+
+Once merged, the next `/list-memory-files` invocation by any user will surface your file.
+
+== Manual variant (no slash command)
+
+If you'd rather do it by hand:
+
+. Clone the repo into a sibling directory.
+. Create a feature branch.
+. Add your file with frontmatter (see https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`]).
+. Run `node _meta/validate.mjs` + the build scripts.
+. Commit with `git commit -F` and a Co-Authored-By trailer.
+. Push and open the PR with `gh pr create --assignee opoudjis --title "..." --body-file ...`.
+
+The slash command is just automation around these steps. CI catches anything the slash command would have caught.
+
+== See also
+
+* link:../../concepts/scope-rubric/[Scope rubric] — picking the right scope.
+* link:../../reference/validator-rules/[Validator rules] — what the validator enforces.
+* https://github.com/riboseinc/claude-memory-files/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] — the policy companion to this guide.

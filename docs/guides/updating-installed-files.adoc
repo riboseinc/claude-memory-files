@@ -1,0 +1,125 @@
+---
+title: Updating installed files
+layout: default
+parent: Guides
+nav_order: 5
+---
+
+= Updating installed files
+
+When upstream changes a file you've installed, `--update` re-fetches and applies a decision matrix that respects your local edits (and, for `personal-share`, your customisations).
+
+== The basic command
+
+[source,bash]
+----
+# Via the slash command
+/update-memory-file github-pr-title-issue-link
+
+# Via the curl one-liner equivalent
+curl -fsSL https://raw.githubusercontent.com/riboseinc/claude-memory-files/main/tools/install.sh \
+  | bash -s -- --update github-pr-title-issue-link
+----
+
+The installer reads the manifest entry for the slug, fetches the upstream file, compares hashes, computes the semver bump category, and decides what to do.
+
+== The decision matrix
+
+[cols="1,1,2"]
+|===
+| Local edited? | Bump | Action
+
+| no | any | Silent overwrite. Manifest history appended with an `update` event.
+| yes | any | **Abort** with a clear message. `--force` overrides.
+| `forked: true` (personal-share) | any | **No-op.** `--upstream` overrides.
+| n/a (hashes differ, versions match) | none | Abort as anomalous. `--force` overrides.
+|===
+
+"Local edited" means the on-disk file's body hash differs from the manifest-recorded `installed-hash`. The installer computes both at update time, frontmatter-stripped, body-only.
+
+== Worked examples
+
+**Clean local, upstream version bumped (minor) → silent overwrite.** Nothing to do; the installer just applies the update and reports.
+
+[source]
+----
+$ ./tools/install.sh --update github-pr-title-issue-link
+Fetching https://raw.githubusercontent.com/riboseinc/claude-memory-files/main/instructions/github-pr-title-issue-link.md
+  Installed: 1.0.0 (sha256:abc123def456...)
+  Upstream:  1.1.0 (sha256:def789012345...) [minor bump]
+  Local edited: no
+  Overwrote /Users/you/.claude/instructions/github-pr-title-issue-link.md
+
+✓ Updated github-pr-title-issue-link → 1.1.0 (was 1.0.0, minor bump)
+----
+
+**Local edited → abort.** The installer refuses to overwrite your edits.
+
+[source]
+----
+$ ./tools/install.sh --update github-pr-title-issue-link
+  Installed: 1.0.0 (sha256:abc123def456...)
+  Upstream:  1.1.0 (sha256:def789012345...) [minor bump]
+  Local edited: yes
+
+✗ github-pr-title-issue-link: update aborted — local copy has been hand-edited since install.
+  Pass --force to overwrite local edits, or merge by hand.
+----
+
+To proceed anyway:
+
+[source,bash]
+----
+./tools/install.sh --update --force github-pr-title-issue-link
+----
+
+**`personal-share` (forked) → no-op.** See link:../customise-personal-share/[Customise a personal-share template] for the rationale and the `--upstream` escape hatch.
+
+== Settings-fragment updates
+
+For `settings-fragment` entries, `--update` does something special: it **subtracts the old manifest-recorded fragment first**, then merges the new upstream fragment. This handles three cases cleanly:
+
+* New entries in upstream → added.
+* Removed entries in upstream → cleanly removed (not orphaned).
+* Hand-curated entries you added separately → preserved (they're not in the manifest, so subtraction doesn't touch them).
+
+A backup of `~/.claude/settings.json` is created before each settings-fragment update at `settings.json.bak.<timestamp>`.
+
+== Manifest history
+
+Every `--update` invocation appends to the slug's `history` array in `~/.claude/.memory-files-manifest.json`. You can audit when each file was installed and updated:
+
+[source,bash]
+----
+jq '.files["github-pr-title-issue-link"].history' ~/.claude/.memory-files-manifest.json
+----
+
+Output:
+
+[source,json]
+----
+[
+  {"event": "install", "ref": "abc123def...", "at": "2026-05-15T10:30:00Z"},
+  {"event": "update",  "ref": "def789012...", "at": "2026-05-19T14:22:00Z"}
+]
+----
+
+== Bulk update
+
+Not implemented in v1. Approximate by listing installed entries and updating each:
+
+[source,bash]
+----
+jq -r '.files | keys[]' ~/.claude/.memory-files-manifest.json | while read slug; do
+  ./tools/install.sh --update "$slug"
+done
+----
+
+A `/update-all-memory-files` slash command may land in v1.1.
+
+== See also
+
+* link:../../concepts/settings-fragments/[Settings-fragments concept] — deep-merge / subtract / re-merge semantics.
+* link:../customise-personal-share/[Customise a personal-share template] — `forked: true` and `--upstream`.
+* link:../../reference/manifest-format/[Manifest format].
+* https://github.com/riboseinc/claude-memory-files/issues/2[Issue #2] — the full update-regulation design.

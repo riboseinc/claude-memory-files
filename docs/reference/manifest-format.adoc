@@ -1,0 +1,97 @@
+---
+title: Manifest format
+layout: default
+parent: Reference
+nav_order: 4
+---
+
+= Manifest format
+
+The user-side manifest at `~/.claude/.memory-files-manifest.json` records every file installed from this repo. It's the source of truth for `--update`, uninstall, and audit.
+
+== Schema
+
+[source,json]
+----
+{
+  "files": {
+    "<slug>": {
+      "type": "instruction | memory-* | settings-fragment | project-claude-md | path-rule",
+      "installed-at": "2026-05-15T10:30:00Z",
+      "installed-hash": "sha256:abc123def456...",
+      "upstream-ref": "<commit-sha or 'main'>",
+      "source-path": "instructions/<name>.md",
+      "local-path": "/absolute/path/to/installed/file",
+      "forked": false,
+      "merged-fragment": null | { ... },
+      "history": [
+        { "event": "install", "ref": "<sha>", "at": "<ISO>" },
+        { "event": "update",  "ref": "<sha>", "at": "<ISO>" }
+      ]
+    }
+  }
+}
+----
+
+== Field-by-field
+
+[cols="1,3"]
+|===
+| `type`
+| Mirrors the file's frontmatter `type:`. Drives per-type uninstall behaviour.
+
+| `installed-at`
+| ISO 8601 UTC timestamp of the last install or update. Bumped on each `--update` event.
+
+| `installed-hash`
+| SHA-256 of the file's body (frontmatter-stripped) as of last install/update. The `--update` flow compares this against the upstream hash to detect drift.
+
+| `upstream-ref`
+| Git ref (SHA when `gh` resolved it, otherwise the symbolic ref like `main` or a tag) the file was last fetched from. Helps `--update` reproduce the exact upstream state.
+
+| `source-path`
+| Relative path in the repo (e.g. `instructions/github-pr-title-issue-link.md`). Used by `--update` to refetch.
+
+| `local-path`
+| Absolute path where the file was written. For `settings-fragment`, this is `~/.claude/settings.json` (the merge target). For `project-claude-md`, this is the user-chosen `<project>/CLAUDE.md`.
+
+| `forked`
+| `true` for `scope: personal-share` installs. Tells `--update` to no-op by default; `--upstream` flag overrides.
+
+| `merged-fragment`
+| For `settings-fragment` entries only: the JSON object that was merged into `settings.json`. Used by uninstall (to subtract precisely) and by `--update` (to subtract old fragment before merging new one).
+
+| `history`
+| Append-only audit trail. Every install/update appends one event. Useful for forensics ("when did this rule change?") and for the v1.1 `/check-memory-files` deprecation scanner.
+|===
+
+== Inspecting the manifest
+
+[source,bash]
+----
+# All entries
+jq . ~/.claude/.memory-files-manifest.json
+
+# Just installed slugs
+jq -r '.files | keys[]' ~/.claude/.memory-files-manifest.json
+
+# History for one entry
+jq '.files["github-pr-title-issue-link"].history' ~/.claude/.memory-files-manifest.json
+
+# Which files were installed before a date
+jq '.files | to_entries | map(select(.value."installed-at" < "2026-05-01"))' ~/.claude/.memory-files-manifest.json
+----
+
+== Backup files
+
+The installer creates timestamped backups in the same directory:
+
+* `~/.claude/settings.json.bak.<timestamp>` — before each settings-fragment install or update.
+
+These accumulate over time; clean up manually with `rm ~/.claude/settings.json.bak.*` when you're confident the merges were correct.
+
+== See also
+
+* link:../validator-rules/[Validator rules].
+* link:../../guides/updating-installed-files/[Updating installed files] — how `--update` reads the manifest.
+* link:../slash-commands/[Slash commands] — the slash commands read the manifest to filter `--installed` listings.
