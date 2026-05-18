@@ -53,3 +53,39 @@ jobs:
       - name: Install/uninstall smoke test
         if: hashFiles('tools/install.sh') != ''
         run: bash tools/test-install.sh
+
+      - name: Plugin manifests + slash-command frontmatter
+        if: hashFiles('.claude-plugin/marketplace.json') != ''
+        run: |
+          set -e
+          # marketplace.json: valid JSON
+          jq -e . .claude-plugin/marketplace.json > /dev/null
+
+          # Each declared plugin source must exist and have a valid plugin.json
+          jq -r '.plugins[].source' .claude-plugin/marketplace.json | while read -r src; do
+            plugin_json="${src}/.claude-plugin/plugin.json"
+            if [ ! -f "${plugin_json}" ]; then
+              echo "::error::marketplace.json declares plugin source ${src} but ${plugin_json} doesn't exist"
+              exit 1
+            fi
+            jq -e . "${plugin_json}" > /dev/null \
+              || { echo "::error::${plugin_json} is not valid JSON"; exit 1; }
+
+            # Every slash command in the plugin must have YAML frontmatter with `description:`
+            cmd_dir="${src}/commands"
+            if [ -d "${cmd_dir}" ]; then
+              find "${cmd_dir}" -maxdepth 1 -name "*.md" -print | while read -r cmd; do
+                # Has --- ... --- block?
+                if ! awk 'BEGIN{c=0} /^---$/{c++} END{exit (c<2)}' "${cmd}"; then
+                  echo "::error::${cmd}: missing YAML frontmatter (--- ... --- block)"
+                  exit 1
+                fi
+                # Has description: field inside frontmatter?
+                if ! awk 'BEGIN{c=0;ok=0} /^---$/{c++; next} c==1 && /^description:[[:space:]]/{ok=1} END{exit !ok}' "${cmd}"; then
+                  echo "::error::${cmd}: frontmatter missing required 'description' field"
+                  exit 1
+                fi
+              done
+            fi
+          done
+          echo "Plugin manifests + slash command frontmatter checks passed."

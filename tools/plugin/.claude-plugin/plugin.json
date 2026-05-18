@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "memory-files-tools",
+  "version": "1.0.0",
+  "description": "Slash commands for installing, removing, listing, and submitting memory files from the riboseinc/claude-memory-files catalogue. Wraps tools/install.sh + tools/uninstall.sh from the catalogue repo (fetched from main on each call so the installer logic is always current).",
+  "author": {
+    "name": "Ribose",
+    "url": "https://github.com/riboseinc"
+  },
+  "homepage": "https://github.com/riboseinc/claude-memory-files",
+  "repository": "https://github.com/riboseinc/claude-memory-files",
+  "license": "MIT",
+  "keywords": ["claude-code", "memory", "instructions", "ribose"],
+  "category": "productivity"
+}
