@@ -6,6 +6,10 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,28 +22,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # PR validation: build the site to confirm it compiles, but don't deploy.
+  # Runs only on pull_request events.
+  validate-docs:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
           working-directory: docs
+      - name: Build with Jekyll (validation only, no deploy)
+        run: bundle exec jekyll build --strict_front_matter --trace
+        working-directory: docs
+        env:
+          JEKYLL_ENV: production
 
+  # Production build for deploy. Runs only on push to main / workflow_dispatch.
+  build:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: docs
       - name: Build with Jekyll
         run: bundle exec jekyll build --verbose --trace --baseurl "${{ steps.pages.outputs.base_path }}"
         working-directory: docs
         env:
           JEKYLL_ENV: production
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -47,6 +66,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
