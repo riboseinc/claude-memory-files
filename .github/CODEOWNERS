@@ -5,4 +5,8 @@
 * @opoudjis
 
 # Per-file owners (from frontmatter; later rules override the catchall above)
-# (no content files yet; per-file rules will populate as seeds land)
+instructions/github-claude-attribution.md @opoudjis
+instructions/github-content-via-file.md @opoudjis
+instructions/github-pr-title-issue-link.md @opoudjis
+instructions/paragraph-shape.md @opoudjis
+instructions/sibling-clones.md @opoudjis
