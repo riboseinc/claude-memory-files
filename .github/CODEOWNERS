@@ -16,4 +16,13 @@ instructions/memory-autoload-default.md @opoudjis
 instructions/narrate-plan.md @opoudjis
 instructions/paragraph-shape.md @opoudjis
 instructions/sibling-clones.md @opoudjis
+memory/feedback_external_docs_framing.md @opoudjis
+memory/feedback_handhold_when_frustrated.md @opoudjis
+memory/feedback_metanorma_org_project_assignment.md @opoudjis
+memory/feedback_pr_always_assigned.md @opoudjis
+memory/feedback_pr_always_tagged_to_issue.md @opoudjis
+memory/ribose_conventions.md @opoudjis
 memory/user-maintained-gems.md @opoudjis
+project-claude-md/ruby-gem.md @opoudjis
+rules/feedback_jekyll_nav_registration.md @opoudjis
+rules/feedback_pr_chain_no_local_deps.md @opoudjis
