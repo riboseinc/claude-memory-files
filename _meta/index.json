@@ -317,6 +317,76 @@
       ]
     },
     {
+      "name": "common-unix-reads-allowlist",
+      "path": "settings-fragments/common-unix-reads-allowlist.md",
+      "description": "Read-only Unix tool allowlist (grep, find, ls, cat, head, tail, wc) for ~/.claude/settings.json. No writes.",
+      "type": "settings-fragment",
+      "scope": "universal",
+      "tags": [
+        "settings",
+        "allowlist",
+        "toolchain"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "github-cli-reads-allowlist",
+      "path": "settings-fragments/github-cli-reads-allowlist.md",
+      "description": "Read-only gh CLI allowlist (issue view, pr view/list, api, repo view) for ~/.claude/settings.json. No write operations.",
+      "type": "settings-fragment",
+      "scope": "team",
+      "tags": [
+        "settings",
+        "allowlist",
+        "github",
+        "cli"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "ruby-bundler-allowlist",
+      "path": "settings-fragments/ruby-bundler-allowlist.md",
+      "description": "Permission allowlist for common Ruby/Bundler commands (bundle exec, rake, rubocop, rspec) — deep-merged into ~/.claude/settings.json.",
+      "type": "settings-fragment",
+      "scope": "team",
+      "tags": [
+        "settings",
+        "allowlist",
+        "ruby",
+        "bundler"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
+      "name": "web-research-allowlist",
+      "path": "settings-fragments/web-research-allowlist.md",
+      "description": "Web research allowlist (WebSearch + WebFetch against Anthropic and GitHub docs) for ~/.claude/settings.json. Read-only sources.",
+      "type": "settings-fragment",
+      "scope": "universal",
+      "tags": [
+        "settings",
+        "allowlist",
+        "web"
+      ],
+      "version": "1.0.0",
+      "author": "opoudjis",
+      "owners": [
+        "opoudjis"
+      ]
+    },
+    {
       "name": "ruby-gem",
       "path": "project-claude-md/ruby-gem.md",
       "description": "Starter CLAUDE.md for Ribose-style Ruby gem repos (Bundler + RSpec + RuboCop + batched release cadence).",

@@ -23,6 +23,10 @@ memory/feedback_pr_always_assigned.md @opoudjis
 memory/feedback_pr_always_tagged_to_issue.md @opoudjis
 memory/ribose_conventions.md @opoudjis
 memory/user-maintained-gems.md @opoudjis
+settings-fragments/common-unix-reads-allowlist.md @opoudjis
+settings-fragments/github-cli-reads-allowlist.md @opoudjis
+settings-fragments/ruby-bundler-allowlist.md @opoudjis
+settings-fragments/web-research-allowlist.md @opoudjis
 project-claude-md/ruby-gem.md @opoudjis
 rules/feedback_jekyll_nav_registration.md @opoudjis
 rules/feedback_pr_chain_no_local_deps.md @opoudjis
