@@ -1,0 +1,27 @@
+{
+  "name": "claude-memory-files",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Curated, modular memory and instruction files for Claude Code (Ribose orgs).",
+  "homepage": "https://github.com/riboseinc/claude-memory-files",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/riboseinc/claude-memory-files.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "validate": "node _meta/validate.mjs",
+    "build-index": "node _meta/build-index.mjs",
+    "build-codeowners": "node _meta/build-codeowners.mjs",
+    "build": "npm run build-index && npm run build-codeowners"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.7.0"
+  }
+}
