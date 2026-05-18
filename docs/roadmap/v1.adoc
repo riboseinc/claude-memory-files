@@ -1,0 +1,38 @@
+---
+title: v1 — foundational design
+layout: default
+parent: Roadmap
+nav_order: 1
+---
+
+= v1 — foundational design
+
+The foundational v1 design is captured in https://github.com/riboseinc/claude-memory-files/issues/1[issue #1] (seven design comments covering distribution model, scope, schema, hooks-deferred, install paths, seed set, roadmap).
+
+== What v1 ships
+
+* **25 seed files** across 5 categories: 11 instructions, 7 memory, 4 settings-fragments, 1 project-claude-md, 2 rules. `hooks/` is empty in v1 by design (v2-gated; see link:../../concepts/hooks-deferred/[hooks-deferred] for rationale).
+* **Local validator** at `_meta/validate.mjs` with CI enforcement via `.github/workflows/validate.yml`. Includes drift checks on `.github/CODEOWNERS` and `_meta/index.json`, plus shellcheck on the installer scripts, plus the install/uninstall/update smoke test.
+* **Two install paths:**
+  * `tools/install.sh` (curl one-liner; see link:../../guides/cherry-pick-via-curl/[Cherry-pick via curl]).
+  * Companion plugin with five slash commands (see link:../../guides/using-slash-commands/[Using slash commands]).
+* **`--update` flow** with hash drift detection + decision matrix (see link:../../guides/updating-installed-files/[Updating installed files]).
+* **Documentation site** (this site), modelled on `lutaml/canon` per Ribose AsciiDoc house standard, with build-on-PR validation in the GH Actions workflow.
+
+== The seed batch
+
+The full list of seed files, organised by category and scope, is in https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965838[issue #1 comment 5]. The seed includes:
+
+* Worked examples of every scope value (`universal`, `team`, `team: metanorma`, `personal-share`).
+* Worked examples of every active type (instructions, memory-feedback, settings-fragment, project-claude-md, path-rule).
+* A worked **mechanism/data pair** (`github-narrative-location` + `user-maintained-gems`) demonstrating `requires-companion`.
+* A worked **`team:` qualifier** pair (`github-no-releases` + `github-metanorma-project`, both `team: metanorma`).
+* Worked **personal-share** entries for both data templates (`user-maintained-gems`) and behavioural preferences (`feedback_handhold_when_frustrated`).
+
+== The PR sequence
+
+v1 landed as a 9-content-PR + 4-docs-PR + 1-CI-PR sequence. Each PR is small and reviewable; the sequence is in https://github.com/riboseinc/claude-memory-files/issues/1#issuecomment-4458965968[issue #1 comment 6].
+
+== Design history
+
+For the full design rationale — including the cursor-rules failure mode, the plugin-spec memory-slot gap, the AGENTS.md portability question, the CVE-2025-59536/CVE-2026-21852 hook history — see https://github.com/riboseinc/claude-memory-files/issues/1[issue #1] and read the seven comments in order. The design was surfaced in advance of any code, with explicit "what I want pushback on" sections inviting Ronald and Andrew to challenge each piece.

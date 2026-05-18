@@ -1,0 +1,105 @@
+---
+title: File types
+layout: default
+parent: Reference
+nav_order: 2
+---
+
+= File types
+
+Every content file declares a `type:` in frontmatter. The type determines which category directory the file lives in, how the installer handles it, and which type-specific frontmatter fields are required.
+
+== Quick table
+
+[cols="1,1,2,1"]
+|===
+| `type:` | Category dir | Install target | Autoload
+
+| `instruction`
+| `instructions/`
+| `~/.claude/instructions/<name>.md` + `@`-include in `CLAUDE.md`
+| Yes
+
+| `memory-feedback`
+| `memory/`
+| `~/.claude/memory/<name>.md`
+| No
+
+| `memory-reference`
+| `memory/`
+| `~/.claude/memory/<name>.md`
+| No
+
+| `memory-project`
+| `memory/`
+| `~/.claude/memory/<name>.md`
+| No
+
+| `memory-user`
+| `memory/`
+| `~/.claude/memory/<name>.md`
+| No
+
+| `settings-fragment`
+| `settings-fragments/`
+| Deep-merge into `~/.claude/settings.json`
+| n/a
+
+| `project-claude-md`
+| `project-claude-md/`
+| `<project-dir>/CLAUDE.md` (requires `--project`)
+| n/a
+
+| `path-rule`
+| `rules/`
+| `~/.claude/rules/<name>.md` (or `<project>/.claude/rules/`)
+| Anthropic `paths:` glob match
+
+| `hook`
+| `hooks/` (v2 only)
+| `~/.claude/hooks/<name>/` (sandboxed)
+| Per session, gated by safety
+|===
+
+== Type-specific frontmatter requirements
+
+=== `settings-fragment`
+
+Body must contain exactly one JSON code block under a `## fragment` heading. The validator rejects entries that touch top-level keys outside `permissions.{allow, deny, ask}` and `env`. See link:../../concepts/settings-fragments/[Settings-fragments concept] for deep-merge semantics.
+
+=== `project-claude-md`
+
+Frontmatter must declare `project-type:` (e.g. `ruby-gem`, `jekyll-docs`, `rails-app`, `generic`) for picker filtering. Body is the literal `CLAUDE.md` content — frontmatter is stripped on install and the body is written to `<project>/CLAUDE.md`. Body length capped at 200 lines.
+
+=== `path-rule`
+
+Frontmatter must include a non-empty `paths:` list of glob patterns. Each glob is syntax-checked. Example:
+
+[source,yaml]
+----
+paths:
+  - Gemfile
+  - Gemfile.devel
+  - "*.gemspec"
+----
+
+Anthropic's `.claude/rules/` mechanism loads the file only when at least one matching file is in the working set.
+
+=== `hook` (v2 only)
+
+Reserved for v2. Mandatory `safety:` object field declaring which side effects the hook performs. See https://github.com/riboseinc/claude-memory-files/blob/main/SAFETY.md[`SAFETY.md`] and the link:../../concepts/hooks-deferred/[hooks-deferred concept page].
+
+== Memory subtypes
+
+The four `memory-*` types differ only by frontmatter category — install target and behaviour are identical. Use them to signal what kind of content the file holds, which helps reviewers and the future-generated catalogue.
+
+* `memory-feedback` — corrections, behavioural preferences, incident history.
+* `memory-reference` — facts, data tables, look-up information.
+* `memory-project` — project-state notes, in-flight work context.
+* `memory-user` — user profile, work-domain facts, identity data (with care — secrets never go here).
+
+== See also
+
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — full frontmatter contract with type-specific requirements.
+* link:../validator-rules/[Validator rules] — what the validator enforces per type.
+* link:../../concepts/instructions-vs-memory/[Instructions vs memory] — operational distinction.

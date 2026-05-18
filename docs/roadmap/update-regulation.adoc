@@ -1,0 +1,52 @@
+---
+title: Update regulation
+layout: default
+parent: Roadmap
+nav_order: 2
+---
+
+= Update regulation
+
+The update-regulation policy is captured in https://github.com/riboseinc/claude-memory-files/issues/2[issue #2] — a single rich body covering author authority, semver, personal-share strict integrity, client `--update` flow, deprecation tombstones, schema migrations, and the v1 minimum-viable additions.
+
+== What landed in v1
+
+The `--update` bridge — the client-side decision matrix that respects local edits and `personal-share` forks. Specifically:
+
+* `install.sh --update <slug>` and `/update-memory-file <slug>` (see link:../../guides/updating-installed-files/[guide]).
+* Hash-based drift detection (frontmatter-stripped body hashes).
+* Semver bump categorisation (`patch`/`minor`/`major`/`none`/`unknown`).
+* The decision matrix:
++
+[cols="1,1,2"]
+|===
+| Local edited? | Bump | Action
+| no | any | Silent overwrite; manifest history appended.
+| yes | any | Abort; `--force` overrides.
+| `forked: true` | any | No-op; `--upstream` overrides.
+|===
+
+* `merged-fragment` field in the manifest, used by uninstall (subtract precisely, preserve hand-curated entries) and by `--update` (subtract old, merge new).
+* `history` array in the manifest for audit.
+
+== What's deferred to post-v1
+
+The remainder of issue #2's design lands in a separate post-v1 PR series:
+
+* **`owners:` frontmatter + auto-generated `CODEOWNERS`** — declare per-file owners; CI generates `.github/CODEOWNERS` from frontmatter.
+* **Branch-protection rules** keyed on scope (`personal-share` → single owner; `team` → any owner; `universal` → owner + maintainer).
+* **Validator-enforced semver** — `version:` must bump on body change; flat-on-body-change and version regression both rejected at PR time.
+* **Deprecation tombstones** — `deprecated: true` + `deprecated-reason:` + `deprecated-since:` + `superseded-by:`. Body becomes a stub pointing at the successor. Slug stays in the repo forever (never hard-removed), so installed copies have a signal to fail-open on.
+* **`/check-memory-files` slash command** — scans the manifest for installed-and-now-deprecated entries.
+* **Auto-merge by trusted contributors** — `_meta/contributors.json` tracks merged-PR count; after N merges, contributors gain self-merge rights on their own `personal-share` and (with maintainer approval) `team` files.
+* **Three-way merge for `--update`** — instead of abort, offer a structured merge of upstream changes against local edits.
+
+== Why we shipped the bridge first
+
+The full update-regulation policy is substantial; landing it all at once would have delayed the v1 release by weeks and would have introduced new validator/CI surface to maintain before any user feedback came in. Shipping just the `--update` flow gives users a usable update mechanism today while leaving the policy work to be informed by actual usage patterns from the first wave of contributors.
+
+== See also
+
+* https://github.com/riboseinc/claude-memory-files/issues/2[Issue #2] — the full policy.
+* link:../../guides/updating-installed-files/[Updating installed files] — user guide for what v1 ships.
+* link:../v1.1-and-v2/[v1.1 and v2] — the next-version planning.

@@ -1,0 +1,124 @@
+---
+title: Slash commands
+layout: default
+parent: Reference
+nav_order: 5
+---
+
+= Slash commands reference
+
+The companion plugin ships five slash commands. Install once via `/plugin marketplace add riboseinc/claude-memory-files && /plugin install memory-files-tools@claude-memory-files`.
+
+== `/list-memory-files`
+
+Browse the catalogue with optional filters.
+
+[source]
+----
+/list-memory-files [--tag <tag>] [--scope universal|team|personal-share]
+                   [--team <name>] [--installed] [--include-deprecated]
+----
+
+[cols="1,3"]
+|===
+| `--tag <tag>` | Only entries whose `tags` array includes `<tag>`.
+| `--scope <s>` | Only entries with `scope: <s>`.
+| `--team <name>` | Only entries with `team: <name>`.
+| `--installed` | Only entries currently in the user's manifest.
+| `--include-deprecated` | Include tombstoned entries (hidden by default).
+|===
+
+Renders the matching entries grouped by category. Output suggests next-action commands.
+
+== `/install-memory-file`
+
+Install a file by slug or path.
+
+[source]
+----
+/install-memory-file <slug-or-path> [--project <dir>] [--ref <sha>]
+----
+
+[cols="1,3"]
+|===
+| `<slug-or-path>` | The file's `name:` (looked up in the catalogue index) or a relative path like `instructions/<name>.md`.
+| `--project <dir>` | Required for `type: project-claude-md`; optional for `path-rule`.
+| `--ref <sha>` | Pin to a specific git ref or tag instead of `main`.
+|===
+
+Shows the file's frontmatter and asks for confirmation before installing.
+
+== `/update-memory-file`
+
+Re-fetch upstream and apply the link:../../guides/updating-installed-files/[decision matrix].
+
+[source]
+----
+/update-memory-file <slug> [--force] [--upstream] [--ref <sha>]
+----
+
+[cols="1,3"]
+|===
+| `<slug>` | Required; must already be in the user's manifest.
+| `--force` | Override the abort case for hand-edited local files.
+| `--upstream` | For `scope: personal-share` (forked) entries: overwrite the local fork from upstream.
+| `--ref <sha>` | Pin update to a specific ref instead of `main`.
+|===
+
+== `/remove-memory-file`
+
+Uninstall by slug.
+
+[source]
+----
+/remove-memory-file <slug>
+----
+
+Shows what will be removed (file paths, `@`-include strips, settings-fragment subtractions) before acting. For `settings-fragment`, the manifest-recorded `merged-fragment` is subtracted from `settings.json`; hand-curated entries the user added separately survive.
+
+For `project-claude-md`, removal is **manual** — the slash command only removes the manifest entry. The project's `CLAUDE.md` may have been hand-edited since install; review and remove manually if appropriate.
+
+== `/submit-memory-file`
+
+Propose a new file (interactive walkthrough).
+
+[source]
+----
+/submit-memory-file <path-to-local-file.md> [--category <c>]
+----
+
+[cols="1,3"]
+|===
+| `<path-to-local-file.md>` | A file in your local `~/.claude/` setup.
+| `--category <c>` | One of `instructions`, `memory`, `settings-fragments`, `project-claude-md`, `rules`. If omitted, the command prompts.
+|===
+
+See link:../../guides/submitting-a-file/[Submitting your own file] for the end-to-end walkthrough.
+
+== Common workflows
+
+**Browse and install:**
+
+[source]
+----
+/list-memory-files --tag github
+/install-memory-file github-pr-title-issue-link
+----
+
+**Check what's installed and outdated:**
+
+[source]
+----
+/list-memory-files --installed
+----
+
+(`--installed --outdated` filter is a v1.1 addition; v1 lists installed only.)
+
+**Refresh everything:**
+
+Not a single command in v1. Run `/update-memory-file <slug>` per slug, or scripted via the manifest (see link:../../guides/updating-installed-files/[Updating installed files]).
+
+== See also
+
+* link:../../guides/using-slash-commands/[Using the slash commands] — workflow-oriented guide.
+* link:../manifest-format/[Manifest format] — what the slash commands read and write.

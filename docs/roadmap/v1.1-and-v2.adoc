@@ -1,0 +1,48 @@
+---
+title: v1.1 and v2
+layout: default
+parent: Roadmap
+nav_order: 3
+---
+
+= v1.1 and v2
+
+What's planned next, and what triggers each release.
+
+== v1.1 — quality-of-life additions
+
+No fixed timeline; v1.1 lands when the additions are ready and v1 has shaken out in real use. Candidates:
+
+* **Generated README from `_meta/index.json`.** v1 ships a hand-written README; v1.1 wires `_meta/build-readme.mjs` so the README catalogue stays in sync with frontmatter automatically. Triggered when the catalogue grows past ~50 entries.
+* **`strategy-checkin` instruction file** added to the seed. Strong rule but it ties into `narrate-plan` and `paragraph-shape` in ways that need precedence work. Deferred from v1 to keep the seed clean.
+* **`paths:` frontmatter for memory files** (Anthropic's native `.claude/rules/` field) as an optional scoping mechanism beyond just `path-rule` type. Deferred from v1 because adding it speculatively complicates the schema without a concrete use case.
+* **Populated `project-claude-md/` directory.** v1 ships one exemplar (`ruby-gem.md`). v1.1 adds `jekyll-docs`, `rails-app`, `generic`, and any others contributors propose.
+* **More `requires-companion:` pairs.** v1's `github-narrative-location` + `user-maintained-gems` and `github-pr-assignment` + same companion are the worked examples. Expect more mechanism/data splits as contributors submit.
+* **`/check-memory-files` slash command** — deprecation-scanner; walks the manifest for installed-and-deprecated entries. Lands alongside the deprecation tombstone mechanism (see link:../update-regulation/[update regulation]).
+* **`/update-all-memory-files` slash command** — bulk-refresh installed entries.
+* **Lychee link-checking in CI** — catches broken cross-references in the docs site, especially valuable as guides/concepts/reference cross-link grows.
+
+== v2 — hooks gate
+
+`hooks/` opens for contributions when **at least three v1 PRs from external contributors have flowed through the schema and the validator has had real exercise**. The point is to learn what falls out of the schema before adding the highest-risk category. See link:../../concepts/hooks-deferred/[hooks-deferred] for the rationale.
+
+When v2 opens, it lands:
+
+* `hooks/` directory enabled (validator drops the v1 guard).
+* Mandatory `safety:` frontmatter field for hook entries.
+* CI safety lint (absolute path detection, `$HOME` literal detection, `curl | bash` pattern detection, write-path constraints).
+* CODEOWNERS two-reviewer rule for any `hooks/` PR.
+* Plugin-sandboxed execution recommended.
+
+The full v2 hook policy is in https://github.com/riboseinc/claude-memory-files/blob/main/SAFETY.md[`SAFETY.md`].
+
+== The continuing thread
+
+Periodically (suggested quarterly), maintainers and contributors review their local `~/.claude/memory/` and `~/.claude/instructions/` for files worth promoting to the shared repo as team standards. Candidates are files that:
+
+* Have proven durable across multiple sessions/projects.
+* Generalise beyond personal idiom.
+* Have a clear scope (`universal` / `team` / `personal-share`).
+* Don't already overlap an existing seed.
+
+This is the maintenance discipline that keeps the catalogue useful over time. The link:../../guides/submitting-a-file/[submission guide] walks through promoting a file from your local setup.

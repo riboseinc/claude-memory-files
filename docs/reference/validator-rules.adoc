@@ -1,0 +1,74 @@
+---
+title: Validator rules
+layout: default
+parent: Reference
+nav_order: 3
+---
+
+= Validator rules
+
+The validator at `_meta/validate.mjs` enforces a fixed set of rules on every content file. CI runs it on every PR via `.github/workflows/validate.yml`. The source of truth for these rules is `SCHEMA.md` in the repo root; this page mirrors them as a reference.
+
+== Errors (block PR)
+
+The validator exits non-zero if any of these fail:
+
+. **Missing required field.** `name`, `description`, `type`, `scope`, `author`, `version` are mandatory.
+. **Unknown value for `type` or `scope`.** Must match the enum in `_meta/schema.json`.
+. **Body > 200 lines.** Matches Anthropic's MEMORY.md cap; longer bodies don't fit Claude Code's context-loading discipline.
+. **`description` > 140 chars.** Used in README and slash-command picker, needs to be tight.
+. **Tag not in `_meta/tags.txt` controlled vocabulary.** Tag taxonomy is centrally curated.
+. **`name` ≠ filename (minus `.md`).** Catches typos.
+. **Type-specific schema violations.** See link:../file-types/[File types] for the per-type frontmatter requirements.
+. **`scope: personal-share` with `owners.length != 1` or `owners[0] != author.github`.** Strict single-owner enforcement.
+. **`deprecated: true` without populated `deprecated-reason:` or `deprecated-since:`.** Tombstone shape required.
+. **PR touches a file under `hooks/` other than `.gitkeep`.** v2 guard.
+
+== Warnings (do not block, but visible in CI logs)
+
+. **`conflicts-with: [B]` declared without B reciprocating** (or carrying an explanatory note in its body).
+. **`supersedes:` references a slug not in the repo.**
+. **`requires-companion:` references a slug not in the repo.**
+. **`[[wiki-link]]`-style body reference doesn't resolve** to a file in the repo.
+
+These warnings are informational — they don't block the PR but they surface dangling references for the reviewer to notice.
+
+== Drift checks
+
+CI separately runs:
+
+[source,bash]
+----
+node _meta/build-codeowners.mjs
+git diff --exit-code .github/CODEOWNERS
+
+node _meta/build-index.mjs
+git diff --exit-code _meta/index.json
+----
+
+If either differs from the committed file, CI fails with a pointer to regenerate locally and commit. These checks catch PRs that change a file's `owners:` field without regenerating CODEOWNERS, or add/remove a file without regenerating the index.
+
+== Running locally
+
+[source,bash]
+----
+node _meta/validate.mjs
+----
+
+Runs all the rules above against the working tree. Exits 0 if green, non-zero on any error. Warnings print but don't affect the exit code.
+
+== Future enforcement (deferred to ticket #2)
+
+The following rules are documented in `SCHEMA.md` but not yet validator-enforced. They're applied by reviewer judgement until the ticket-#2 work lands:
+
+* **Version-bump-on-body-change.** PRs that change body must bump `version:`.
+* **Semver monotonicity.** `version:` regression or flat-on-body-change should be rejected.
+* **CODEOWNERS strict policy.** `scope: universal` PRs require maintainer + owner approval; `scope: team` requires any owner; `scope: personal-share` requires single named owner.
+
+See https://github.com/riboseinc/claude-memory-files/issues/2[issue #2] for the full update-regulation design.
+
+== See also
+
+* link:../../concepts/scope-rubric/[Scope rubric] — when each scope rule applies.
+* https://github.com/riboseinc/claude-memory-files/blob/main/SCHEMA.md[`SCHEMA.md`] — full contract with worked examples.
+* https://github.com/riboseinc/claude-memory-files/blob/main/_meta/validate.mjs[`_meta/validate.mjs`] — the implementation.

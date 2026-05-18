@@ -1,0 +1,16 @@
+---
+title: Guides
+layout: default
+nav_order: 4
+has_children: true
+---
+
+= Guides
+
+Task-based walkthroughs for the common operations against this repo.
+
+* link:cherry-pick-via-curl/[**Cherry-pick a file via curl**] — the zero-ceremony one-liner install.
+* link:using-slash-commands/[**Using the slash commands**] — install the companion plugin once, then drive everything from inside Claude Code.
+* link:submitting-a-file/[**Submitting your own file**] — the `/submit-memory-file` end-to-end flow.
+* link:customise-personal-share/[**Customise a personal-share template**] — walkthrough using `user-maintained-gems`.
+* link:updating-installed-files/[**Update installed files**] — the `--update` decision matrix, `--force`, and `--upstream`.

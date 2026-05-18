@@ -1,0 +1,72 @@
+---
+title: Using the slash commands
+layout: default
+parent: Guides
+nav_order: 2
+---
+
+= Using the slash commands
+
+The durable workflow: install the companion plugin once, then drive everything from inside Claude Code with `/install-memory-file`, `/list-memory-files`, `/update-memory-file`, `/remove-memory-file`, and `/submit-memory-file`.
+
+== One-time setup
+
+[source]
+----
+/plugin marketplace add riboseinc/claude-memory-files
+/plugin install memory-files-tools@claude-memory-files
+----
+
+The plugin ships only the five slash commands; `install.sh`, `uninstall.sh`, and `update.sh` are still fetched from `main` on each invocation (so the installer logic stays current with the catalogue).
+
+== The five commands
+
+[cols="1,2"]
+|===
+| `/list-memory-files [--tag] [--scope] [--team] [--installed]`
+| Browse the catalogue with filters. `--installed` shows only what's on your machine. `--include-deprecated` shows tombstoned entries.
+
+| `/install-memory-file <slug> [--project <dir>] [--ref <sha>]`
+| Install by slug. The command looks up the file in the catalogue index, shows you the frontmatter (description, type, scope, owners, version, requires-companion warnings), and asks before installing.
+
+| `/update-memory-file <slug> [--force] [--upstream] [--ref <sha>]`
+| Re-fetch upstream and apply the link:../updating-installed-files/[decision matrix]. Aborts if local has been hand-edited (use `--force` to override). For `personal-share` (forked) entries, defaults to no-op unless `--upstream` is passed.
+
+| `/remove-memory-file <slug>`
+| Uninstall. Shows what will be removed, asks for confirmation. For `settings-fragment`, the manifest-recorded entries are subtracted and hand-curated entries are preserved.
+
+| `/submit-memory-file <local-path>`
+| Scaffold frontmatter for a new file (drafted interactively with you), clone the repo as a sibling, run the validator, commit, and open a PR. See link:../submitting-a-file/[Submitting your own file] for the walkthrough.
+|===
+
+== A typical session
+
+[source]
+----
+> /list-memory-files --scope universal --tag github
+
+[command shows ~7 entries: github-pr-title-issue-link, github-content-via-file, ...]
+
+> /install-memory-file github-pr-title-issue-link
+
+[command shows frontmatter, asks "install? y/n"]
+> y
+
+[command installs; reports target path and manifest update]
+
+> /list-memory-files --installed
+
+[command shows just what's on your machine]
+----
+
+== Why both curl and slash commands?
+
+Two different friction curves. The curl one-liner is the lowest-ceremony entry point for "I saw a file referenced in Microsoft Teams and want to try it once"; no plugin install required. The slash commands are the durable workflow for managing multiple installs, surfacing outdated entries, and exposing the submission flow.
+
+Both install paths write to the same `~/.claude/.memory-files-manifest.json`. You can curl-install something and remove it via slash command, or vice versa.
+
+== See also
+
+* link:../cherry-pick-via-curl/[Cherry-pick a file via curl] — the equivalent flow without the plugin.
+* link:../../reference/slash-commands/[Slash commands reference] — quick reference for all flags.
+* link:../submitting-a-file/[Submitting your own file] — `/submit-memory-file` end-to-end.
