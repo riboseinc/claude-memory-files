@@ -4,6 +4,7 @@ node_modules/
 
 # Jekyll docs site build artefacts
 docs/_site/
+docs/_lychee_site/
 docs/vendor/
 docs/.bundle/
 docs/.jekyll-cache/

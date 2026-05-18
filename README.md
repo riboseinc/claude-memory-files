@@ -2,6 +2,8 @@
 
 Curated, modular memory and instruction files for [Claude Code](https://claude.com/claude-code), maintained by Ribose for developers across our orgs (`riboseinc/*`, `metanorma/*`, `lutaml/*`, `plurimath/*`, `relaton/*`).
 
+**📖 Documentation site: [riboseinc.github.io/claude-memory-files](https://riboseinc.github.io/claude-memory-files/)** — getting started, concepts (scope rubric, mechanism/data, hooks-deferred rationale), task guides (cherry-pick via curl, slash commands, submitting your own file, customising personal-share, updating installed files), reference (frontmatter schema, file types, validator rules, manifest format, slash commands), and roadmap.
+
 ## What this repo is
 
 A flat, cherry-pickable collection of small files that you can drop into your local `~/.claude/` setup individually — **not** a monolithic configuration to adopt wholesale. Each file declares mandatory YAML frontmatter (`name`, `description`, `type`, `scope`, …) and lives under one of five category directories that mirror Claude Code's content surface:

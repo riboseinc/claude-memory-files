@@ -35,10 +35,13 @@ jobs:
           bundler-cache: true
           working-directory: docs
       - name: Build with Jekyll (validation only, no deploy)
-        # --baseurl "" strips the /claude-memory-files prefix from rendered
-        # URLs so lychee can resolve them against docs/_site/ (see
-        # lychee.toml's base setting).
-        run: bundle exec jekyll build --strict_front_matter --trace --baseurl ""
+        # Production baseurl is kept so canonical URLs in rendered HTML
+        # match the live site at riboseinc.github.io/claude-memory-files/.
+        # Output is written into _lychee_site/claude-memory-files/ so the
+        # filesystem layout mirrors the URL structure — root-relative
+        # links like /claude-memory-files/concepts/foo/ then resolve
+        # against root-dir = docs/_lychee_site without lychee remap.
+        run: bundle exec jekyll build --strict_front_matter --trace --destination _lychee_site/claude-memory-files
         working-directory: docs
         env:
           JEKYLL_ENV: production
@@ -46,7 +49,7 @@ jobs:
       - name: Check links with lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --config lychee.toml --root-dir "${{ github.workspace }}/docs/_site" './docs/_site/**/*.html'
+          args: --config lychee.toml --root-dir "${{ github.workspace }}/docs/_lychee_site" './docs/_lychee_site/**/*.html'
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
