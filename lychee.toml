@@ -9,11 +9,26 @@
 # (Requires docs/_site/ to exist — run `bundle exec jekyll build` inside
 # docs/ first.)
 
+# Base path for resolving root-relative URLs found in local HTML files.
+# The validate-docs job builds with --baseurl "" so paths are like
+# /concepts/foo/ rather than /claude-memory-files/concepts/foo/, which
+# this base then resolves to docs/_site/concepts/foo/.
+base = "docs/_site"
+
 # Accept these status codes as "OK" — strict 200 plus the codes we see in
 # practice. 429 is included to absorb transient GitHub rate limits; 403
 # absorbs some Cloudflare-protected pages that block default User-Agents
 # but are otherwise live.
 accept = ["200..=206", "301", "302", "303", "307", "308", "403", "429"]
+
+# Don't check self-referential absolute URLs to the live site or to the
+# repo's main branch — they may not exist yet (this PR may be the one
+# creating them).
+exclude = [
+  "^https://riboseinc\\.github\\.io/claude-memory-files/",
+  "^https://github\\.com/riboseinc/claude-memory-files/tree/main/docs/",
+  "^https://github\\.com/riboseinc/claude-memory-files/blob/main/docs/",
+]
 
 # Treat localhost / 127.0.0.1 / 0.0.0.0 references as OK (the Jekyll dev
 # server's URLs will appear in the rendered output during local builds).
