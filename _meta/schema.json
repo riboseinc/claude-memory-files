@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/riboseinc/claude-memory-files/blob/main/_meta/schema.json",
+  "title": "claude-memory-files frontmatter",
+  "description": "Frontmatter schema for content files under instructions/, memory/, settings-fragments/, project-claude-md/, rules/. See SCHEMA.md for the human-readable contract.",
+  "type": "object",
+  "required": ["name", "description", "type", "scope", "author", "version"],
+  "properties": {
+    "schema-version": {
+      "type": "integer",
+      "default": 1,
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*[a-z0-9]$",
+      "description": "kebab-case or snake_case slug; must match filename minus .md"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 140
+    },
+    "type": {
+      "enum": [
+        "instruction",
+        "memory-feedback",
+        "memory-reference",
+        "memory-project",
+        "memory-user",
+        "settings-fragment",
+        "project-claude-md",
+        "path-rule",
+        "hook"
+      ]
+    },
+    "scope": {
+      "enum": ["universal", "team", "personal-share"]
+    },
+    "team": {
+      "type": "string",
+      "description": "Optional team qualifier for scope: team. e.g. 'metanorma'."
+    },
+    "target": {
+      "type": "string",
+      "description": "Install target; semantics depend on type."
+    },
+    "autoload": {
+      "type": "boolean"
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "maxItems": 5
+    },
+    "author": {
+      "type": "object",
+      "required": ["name", "github"],
+      "properties": {
+        "name": {"type": "string"},
+        "github": {"type": "string", "pattern": "^[a-zA-Z0-9-]+$"}
+      }
+    },
+    "owners": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-zA-Z0-9-]+$"},
+      "minItems": 1
+    },
+    "license": {"type": "string"},
+    "requires": {
+      "type": "object",
+      "properties": {
+        "claude-code": {"type": "string"}
+      }
+    },
+    "requires-companion": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "conflicts-with": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "deprecated": {"type": "boolean", "default": false},
+    "deprecated-reason": {"type": "string"},
+    "superseded-by": {"type": "string"},
+    "deprecated-since": {"type": "string", "format": "date"},
+    "changelog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version", "date", "summary"],
+        "properties": {
+          "version": {"type": "string"},
+          "date": {"type": "string", "format": "date"},
+          "summary": {"type": "string"}
+        }
+      }
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "project-type": {
+      "type": "string",
+      "enum": ["ruby-gem", "jekyll-docs", "rails-app", "generic"]
+    },
+    "paths": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "safety": {
+      "type": "object",
+      "description": "Required for type: hook (v2 only).",
+      "required": ["runs-shell", "network", "modifies-files", "reads-credentials"],
+      "properties": {
+        "runs-shell": {"type": "boolean"},
+        "network": {"type": "boolean"},
+        "modifies-files": {"type": "boolean"},
+        "reads-credentials": {"type": "boolean"},
+        "paths-touched": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "project-claude-md"}}, "required": ["type"]},
+      "then": {"required": ["project-type"]}
+    },
+    {
+      "if": {"properties": {"type": {"const": "path-rule"}}, "required": ["type"]},
+      "then": {"required": ["paths"]}
+    },
+    {
+      "if": {"properties": {"type": {"const": "hook"}}, "required": ["type"]},
+      "then": {"required": ["safety"]}
+    },
+    {
+      "if": {"properties": {"deprecated": {"const": true}}, "required": ["deprecated"]},
+      "then": {"required": ["deprecated-reason", "deprecated-since"]}
+    },
+    {
+      "if": {"properties": {"scope": {"const": "personal-share"}}, "required": ["scope"]},
+      "then": {
+        "properties": {
+          "owners": {"maxItems": 1, "minItems": 1}
+        }
+      }
+    }
+  ]
+}
