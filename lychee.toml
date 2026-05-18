@@ -1,0 +1,34 @@
+# Lychee link-checker config for the docs site.
+#
+# Used by .github/workflows/docs.yml (validate-docs job) to catch broken
+# cross-references and broken external links on every PR that touches the
+# docs site. Run locally via:
+#
+#   lychee --config lychee.toml docs/_site/**/*.html
+#
+# (Requires docs/_site/ to exist — run `bundle exec jekyll build` inside
+# docs/ first.)
+
+# Accept these status codes as "OK" — strict 200 plus the codes we see in
+# practice. 429 is included to absorb transient GitHub rate limits; 403
+# absorbs some Cloudflare-protected pages that block default User-Agents
+# but are otherwise live.
+accept = ["200..=206", "301", "302", "303", "307", "308", "403", "429"]
+
+# Treat localhost / 127.0.0.1 / 0.0.0.0 references as OK (the Jekyll dev
+# server's URLs will appear in the rendered output during local builds).
+exclude_loopback = true
+
+# Compact output suitable for CI logs.
+no_progress = true
+
+# Transient failures: retry up to 3 times with backoff. Catches the
+# occasional network blip without flaking the whole PR.
+max_retries = 3
+retry_wait_time = 5
+
+# Throttle to avoid triggering rate-limit responses on github.com etc.
+max_concurrency = 10
+
+# Per-link timeout in seconds.
+timeout = 20
