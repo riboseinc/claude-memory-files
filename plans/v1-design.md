@@ -25,6 +25,7 @@ Every issue raised against this programme, in one place. Bidirectional with the 
 |---|---|---|---|
 | 1 | closed | Populate repo (foundational design — distribution model, scope, schema, hooks-deferral, seed file set, install paths, submission flow, roadmap) | https://github.com/riboseinc/claude-memory-files/issues/1 |
 | 2 | open | Update regulation policy: author authority, semver, deprecation, `--update` flow | https://github.com/riboseinc/claude-memory-files/issues/2 |
+| 17 | open | Bundles + composites: curated and ad-hoc multi-rule files with upstream tracking (v1.1 bundles, v1.2 composites) | https://github.com/riboseinc/claude-memory-files/issues/17 |
 
 PRs are intentionally not listed — per the operative `large-plans-publish` convention, the plan tracks issues only, and PRs reach the reader transitively via each issue's "Linked pull requests" sidebar.
 
@@ -213,6 +214,21 @@ version: 1.0.0                         # semver; bumped on substantive content c
 - `path-rule` frontmatter must include the native Anthropic `paths:` list (this is the load-trigger; without it the file does nothing).
 
 **Why no `paths:`/`globs:`/`alwaysApply:` in v1.** The native `.claude/rules/` `paths:` field is a Claude Code feature available for path-scoped rules; we can add it as an optional field in v1.1 once we have a real use case. Adding it speculatively complicates the schema.
+
+---
+
+<a id="bundles-and-composites"></a>
+## Bundles (v1.1) and composites (v1.2) — multi-rule files with upstream tracking
+
+A retention concern surfaced after the v1 schema settled: when several rules co-fire in the same context (e.g. four `github-*` PR-mechanics rules at every `gh pr create`), having them as separate autoloaded files dilutes attention. Users will want to merge co-firing rules into a single named hook. The v1 schema's "one rule per file" atomicity makes naïve local merges sacrifice upstream tracking — exactly the property the repo exists to provide. Full design discussion at [issue #17](https://github.com/riboseinc/claude-memory-files/issues/17); summary here.
+
+**Bundles (v1.1).** New `type: bundle` with `includes: [slug1, slug2, ...]` frontmatter (≥ 2 entries). The bundle's body is the curated merged operational text. Constituents continue to exist as separate files upstream — installable standalone for users who only want one. The installer records both the bundle slug and each constituent's upstream ref in the manifest; `--update` against a bundle reports per-constituent divergence. Validator rules: `includes:` mandatory, each entry must resolve to an existing slug, bundle and constituents may coexist, a constituent may appear in multiple bundles. **Seed bundle for v1.1:** `github-pr-discipline` (the four `github-*` PR universals). Bundles are constrained to single-scope curations (mixing `universal` and `personal-share` upstream invites confusion about audience).
+
+**Composites (v1.2).** Ad-hoc user-side merge. New installer mode `tools/install.sh --merge-into <local-name> <slug1> <slug2> ...` fetches each constituent's body, concatenates, writes to a user-named local file with synthetic frontmatter and a manifest `composite-of: [...]` field. `--update` walks the composite-of list; if any constituent has changed, prompts re-merge vs abort; tracks whether the local merged file has been hand-edited since merge and refuses non-interactive overwrite when it has. Composites are private to one user (not shareable); their distinguishing property versus bundles is **mixed-scope composition** — a user's lived workflow may legitimately mix `universal` rules with `personal-share` rules in one merged file. **Reference test case for v1.2:** `narration-discipline` (two universals: `narrate-plan` + `paragraph-shape`; two personal-shares: `bilingual-narration` + `bash-descriptions`). Any v1.2 PR wiring composites must demonstrate it with this cluster; until v1.2 ships, the cluster stays uncollapsed in the seed-author's local `~/.claude/` as deliberate evidence of the retention cost composites are meant to relieve.
+
+**Why bundles before composites.** Bundles are conceptually narrower (curated, named, single-scope, shared) and so the validator/installer logic is easier to get right; composites build on the same upstream-ref-tracking infrastructure but add hand-edit-detection and re-merge semantics that benefit from a settled bundle foundation. The bundle/composite distinction is not zero-sum — both serve real use cases; they ship in sequence to contain the v1.1 surface, not because one supersedes the other.
+
+**Seed-set impact.** v1 ships only the granular files; no bundle or composite content lands in v1. The seed file set listed in the next section is unaffected. v1.1 adds the `github-pr-discipline` bundle file (alongside the existing four constituents, all four kept standalone). v1.2 ships no new files but adds the `--merge-into` installer mode that exercises the `narration-discipline` test case end-to-end.
 
 ---
 
