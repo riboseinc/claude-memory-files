@@ -16,6 +16,7 @@ Intended outcome: a small, well-curated, CI-enforced repo with ~25 seed files, b
 
 ---
 
+<a id="issues-generated"></a>
 ## Issues generated to fulfil this plan
 
 Every issue raised against this programme, in one place. Bidirectional with the per-issue `Full plan:` back-reference convention — landing on any issue, a reader reaches this plan in one click; landing on this plan, they reach every working tracker in one click.
@@ -125,6 +126,7 @@ riboseinc/claude-memory-files/
 
 ---
 
+<a id="frontmatter"></a>
 ## Frontmatter schema (mandatory, enforced in CI)
 
 Every content file in `instructions/` and `memory/` starts with:
@@ -214,6 +216,7 @@ version: 1.0.0                         # semver; bumped on substantive content c
 
 ---
 
+<a id="seed-files"></a>
 ## Seed file set (v1)
 
 Drawn from Nick's `~/.claude/` (Explore-agent survey at the top of this session). Strictly portable — Greek-language idioms, non-Ribose-activity-specific memory, metanorma-project-specific memory, and personal-credential files are excluded by design.
@@ -286,6 +289,7 @@ Drawn from Nick's `~/.claude/` (Explore-agent survey at the top of this session)
 
 ---
 
+<a id="validation"></a>
 ## Validation (v1: local-only; CI deferred to v2)
 
 **Decision: skip GitHub Actions CI in v1.** With ~25 seed files and a plausible 1–3 PRs/month from three colleagues for the first half-year, manual maintainer review during PR is adequate. The strongest single argument for CI — hook safety lint (CVE-2025-59536) — applies only to v2 when hooks land. GHA workflows also carry ongoing maintenance burden (Action pinning, deprecation chases) that isn't justified at this volume.
@@ -325,6 +329,7 @@ The v2 GHA workflow additionally runs:
 
 ---
 
+<a id="install"></a>
 ## Install mechanisms (both, in parallel)
 
 ### A. `curl | bash` one-liner — zero install ceremony
@@ -375,6 +380,7 @@ The plugin itself is the only thing devs need to install once. After that, `/ins
 
 ---
 
+<a id="submission"></a>
 ## Submission process (Claude-mediated)
 
 A contributor who wants to share a file:
@@ -391,6 +397,7 @@ The submission flow is the eat-our-own-dogfood validation: the repo's own conven
 
 ---
 
+<a id="hooks"></a>
 ## Hooks (v2 — roadmap, not v1)
 
 `SAFETY.md` ships in v1 as a placeholder documenting the v2 policy:
@@ -405,6 +412,7 @@ v1 ships zero hooks. v2 opens after at least three `instructions/` PRs have flow
 
 ---
 
+<a id="update-regulation"></a>
 ## Update regulation (v1)
 
 A maintenance-discipline problem the seven design comments don't address: once a file lands, how do we regulate updates? Drift in installed copies, third-party amendments, deprecation, and schema migrations all matter, and the maintainer (Nick) is rightly worried about becoming a bottleneck for every typo PR.
@@ -515,6 +523,7 @@ Add top-level frontmatter `schema-version: 1` (integer; defaults to 1 if omitted
 - **Additive schema changes** (new optional fields like the v1.1 `paths:`) — lazy. Files keep `schema-version: 1`; validator accepts missing optional fields. No bulk migration.
 - **Breaking schema changes** (rename, type change, new required field) — ship `_meta/migrate-N-to-N+1.mjs` that opens one PR rewriting all affected files and bumps `schema-version:` across the board. Tracked in `_meta/MIGRATIONS.md`. Authors are never asked to migrate by hand.
 
+<a id="trust-ladder"></a>
 ### Trust ladder — data structure in v1, rules in v1.1
 
 `_meta/contributors.json` (hand-maintained for v1; auto-updated in v1.1):
@@ -538,6 +547,7 @@ v1.1 layers on (documented in `CONTRIBUTING.md` as "intended trajectory"):
 - Trusted contributors self-merge their own `scope: team` files without further review.
 - First-time contributors always get maintainer review regardless of file scope.
 
+<a id="trust-ladder-v1-additions"></a>
 ### v1 minimum-viable additions (just these eight)
 
 1. **New frontmatter fields:** `owners:`, `schema-version:`, `deprecated:` + `deprecated-reason:` + `superseded-by:` + `deprecated-since:`, optional `changelog:`.
@@ -555,6 +565,7 @@ v1.1 layers on (documented in `CONTRIBUTING.md` as "intended trajectory"):
 
 ---
 
+<a id="execution-sequence"></a>
 ## Execution sequence (high level)
 
 1. **Post the design as comment series on `riboseinc/claude-memory-files#1`** (see next section for the seven-comment structure). ✅ Posted.
@@ -568,6 +579,7 @@ v1.1 layers on (documented in `CONTRIBUTING.md` as "intended trajectory"):
 
 ---
 
+<a id="strategic-choices"></a>
 ## Surfacing strategic choices to ticket #1 (before any code lands)
 
 **Placement** is governed by `github-narrative-location.md`: detailed change narrative for a Nick-maintained repo lives in ticket comments, not PR descriptions, with multiple focused comments preferred over one wall of text. The substantive design decisions in this plan must therefore be posted to `riboseinc/claude-memory-files#1` as a series of comments **before implementation PRs open**. Subsequent implementation PRs link back ("see ticket #1 comment thread") rather than re-stating the rationale.
@@ -632,6 +644,7 @@ Same as issue #1's comment series: defensive/explanatory, invite challenge, name
 
 ---
 
+<a id="implementation"></a>
 ## Implementation sequence (9 content PRs + 3 docs PRs)
 
 Ronald and Andrew gave no substantive feedback on issues #1 and #2; Ronald said "go ahead". The implementation begins on ticket #1 only — ticket #2's update-regulation mechanism (`--update` mode, `owners:`, deprecation tombstones, manifest history) lands after the foundational v1 ships. The user's added requirement: an "ample documentation site alongside, for handholding", modelled on `lutaml/canon` docs (published at `lutaml.org/canon`), explicitly NOT on `metanorma.org` ("rather heavy and old").
@@ -760,6 +773,7 @@ The review is maintainer activity, not a contributor PR — Nick triages his own
 
 ---
 
+<a id="readme-spec"></a>
 ## README content spec (what CI generates)
 
 The CI-generated `README.md` is mostly the index of catalogued files. But the **handwritten top-of-README preamble** (a markdown fragment in `_meta/readme-preamble.md` that the generator prepends) ships with two outbound-link sections that the user explicitly asked for:
